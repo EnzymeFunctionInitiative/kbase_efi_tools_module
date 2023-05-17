@@ -1,7 +1,7 @@
-SERVICE = example_kb_sdk_app
-SERVICE_CAPS = example_kb_sdk_app
-SPEC_FILE = example_kb_sdk_app.spec
-URL = https://kbase.us/services/example_kb_sdk_app
+SERVICE = kbase_efi_tools_module
+SERVICE_CAPS = kbase_efi_tools_module
+SPEC_FILE = kbase_efi_tools_module.spec
+URL = https://kbase.us/services/kbase_efi_tools_module
 DIR = $(shell pwd)
 LIB_DIR = lib
 SCRIPTS_DIR = scripts

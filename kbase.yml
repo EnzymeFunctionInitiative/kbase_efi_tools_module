@@ -1,5 +1,5 @@
 module-name:
-    example_kb_sdk_app
+    kbase_efi_tools_module
 
 module-description:
     A KBase module

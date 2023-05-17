@@ -1,4 +1,4 @@
-# example_kb_sdk_app release notes
+# kbase_efi_tools_module release notes
 =========================================
 
 0.0.0

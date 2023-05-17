@@ -37,8 +37,8 @@
     "behavior": {
         "service-mapping": {
             "url": "",
-            "name": "example_kb_sdk_app",
-            "method": "run_example_kb_sdk_app",
+            "name": "kbase_efi_tools_module",
+            "method": "run_kbase_efi_tools_module",
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",

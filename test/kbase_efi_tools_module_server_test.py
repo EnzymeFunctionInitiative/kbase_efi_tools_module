@@ -4,14 +4,14 @@ import time
 import unittest
 from configparser import ConfigParser
 
-from example_kb_sdk_app.example_kb_sdk_appImpl import example_kb_sdk_app
-from example_kb_sdk_app.example_kb_sdk_appServer import MethodContext
-from example_kb_sdk_app.authclient import KBaseAuth as _KBaseAuth
+from kbase_efi_tools_module.kbase_efi_tools_moduleImpl import kbase_efi_tools_module
+from kbase_efi_tools_module.kbase_efi_tools_moduleServer import MethodContext
+from kbase_efi_tools_module.authclient import KBaseAuth as _KBaseAuth
 
 from installed_clients.WorkspaceClient import Workspace
 
 
-class example_kb_sdk_appTest(unittest.TestCase):
+class kbase_efi_tools_moduleTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         token = os.environ.get("KB_AUTH_TOKEN", None)
@@ -19,7 +19,7 @@ class example_kb_sdk_appTest(unittest.TestCase):
         cls.cfg = {}
         config = ConfigParser()
         config.read(config_file)
-        for nameval in config.items("example_kb_sdk_app"):
+        for nameval in config.items("kbase_efi_tools_module"):
             cls.cfg[nameval[0]] = nameval[1]
         # Getting username from Auth profile for token
         authServiceUrl = cls.cfg["auth-service-url"]
@@ -34,7 +34,7 @@ class example_kb_sdk_appTest(unittest.TestCase):
                 "user_id": user_id,
                 "provenance": [
                     {
-                        "service": "example_kb_sdk_app",
+                        "service": "kbase_efi_tools_module",
                         "method": "please_never_use_it_in_production",
                         "method_params": [],
                     }
@@ -44,7 +44,7 @@ class example_kb_sdk_appTest(unittest.TestCase):
         )
         cls.wsURL = cls.cfg["workspace-url"]
         cls.wsClient = Workspace(cls.wsURL)
-        cls.serviceImpl = example_kb_sdk_app(cls.cfg)
+        cls.serviceImpl = kbase_efi_tools_module(cls.cfg)
         cls.scratch = cls.cfg["scratch"]
         cls.callback_url = os.environ["SDK_CALLBACK_URL"]
         suffix = int(time.time() * 1000)
@@ -69,7 +69,7 @@ class example_kb_sdk_appTest(unittest.TestCase):
         #
         # Check returned data with
         # self.assertEqual(ret[...], ...) or other unittest methods
-        ret = self.serviceImpl.run_example_kb_sdk_app(
+        ret = self.serviceImpl.run_kbase_efi_tools_module(
             self.ctx,
             {
                 "workspace_name": self.wsName,

@@ -12,13 +12,13 @@ from base import Core
 #END_HEADER
 
 
-class example_kb_sdk_app:
+class kbase_efi_tools_module:
     '''
     Module Name:
-    example_kb_sdk_app
+    kbase_efi_tools_module
 
     Module Description:
-    A KBase module: example_kb_sdk_app
+    A KBase module: kbase_efi_tools_module
     '''
 
     ######## WARNING FOR GEVENT USERS ####### noqa
@@ -45,7 +45,7 @@ class example_kb_sdk_app:
         #END_CONSTRUCTOR
         pass
 
-    def run_example_kb_sdk_app(self, ctx, params):
+    def run_kbase_efi_tools_module(self, ctx, params):
         """
         This example function accepts any number of parameters and returns results in a KBaseReport
         :param params: instance of mapping from String to unspecified object
@@ -54,7 +54,7 @@ class example_kb_sdk_app:
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN run_example_kb_sdk_app
+        #BEGIN run_kbase_efi_tools_module
 
         config = dict(
             callback_url=self.callback_url,
@@ -69,11 +69,11 @@ class example_kb_sdk_app:
         era = ExampleReadsApp(ctx, config=config)
         output = era.do_analysis(params)
 
-        #END run_example_kb_sdk_app
+        #END run_kbase_efi_tools_module
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
-            raise ValueError('Method run_example_kb_sdk_app return value ' +
+            raise ValueError('Method run_kbase_efi_tools_module return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]
