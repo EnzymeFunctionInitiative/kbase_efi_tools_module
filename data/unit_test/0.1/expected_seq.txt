@@ -1,0 +1,8 @@
+num_expected_fragments	blast	3828
+num_expected_fragments	family	3741
+num_expected_fragments	fasta	0
+num_expected_fragments	accession	0
+num_expected_no_fragments	blast	3828
+num_expected_no_fragments	family	3741
+num_expected_no_fragments	fasta	0
+num_expected_no_fragments	accession	0

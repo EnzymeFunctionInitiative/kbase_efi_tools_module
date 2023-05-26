@@ -338,10 +338,14 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_kbase_efi_tools_module.run_kbase_efi_tools_module,
-                             name='kbase_efi_tools_module.run_kbase_efi_tools_module',
+        self.rpc_service.add(impl_kbase_efi_tools_module.run_est_generate_app,
+                             name='kbase_efi_tools_module.run_est_generate_app',
                              types=[dict])
-        self.method_authentication['kbase_efi_tools_module.run_kbase_efi_tools_module'] = 'required'  # noqa
+        self.method_authentication['kbase_efi_tools_module.run_est_generate_app'] = 'required'  # noqa
+        self.rpc_service.add(impl_kbase_efi_tools_module.run_est_analysis_app,
+                             name='kbase_efi_tools_module.run_est_analysis_app',
+                             types=[dict])
+        self.method_authentication['kbase_efi_tools_module.run_est_analysis_app'] = 'required'  # noqa
         self.rpc_service.add(impl_kbase_efi_tools_module.status,
                              name='kbase_efi_tools_module.status',
                              types=[dict])

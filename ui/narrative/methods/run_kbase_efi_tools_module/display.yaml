@@ -1,10 +1,10 @@
 #
 # define display information
 #
-name: SFA Example App 1
+name: EFI-EST Initial Computation
 
 tooltip: |
-    Take the top ten reads from a Single End reads object.
+    Compute the EFI-EST Initial Results for Future SSN Creation
 
 screenshots: []
 
@@ -13,31 +13,114 @@ icon: icon.png
 #
 # define a set of similar apps that might be useful to the user
 #
-suggestions:
-    apps:
-        related:
-            [app1, app2]
-        next:
-            [app3, app4]
+#suggestions:
+#    apps:
+#        related:
+#            [app1, app2]
+#        next:
+#            [app3, app4]
 
 #
 # Configure the display and description of parameters
 #
 parameters :
-    reads_ref :
+    job_name :
         ui-name : |
-            Reads
+            Job name
         short-hint : |
-            A Single End Reads object
-        long-hint  : |
-            A Single End Reads object whose top ten reads you care about.
-    output_name:
+            The name of the output dataset
+        long-hint : |
+            The name of the output dataset
+
+    fam_family_name :
         ui-name : |
-            Output Name
+            Family name
         short-hint : |
-            The name of the resulting object
+            One or more InterPro and UniProt families, space-separated
         long-hint  : |
-            A name for the ten reads returned.
+            InterPro and UniProt families define sets of related proteins. This app can take one or more family names separated by spaces
+    fam_use_uniref :
+        ui-name : |
+            UniRef type
+        short-hint : |
+            UniRef reduces family size by 50% and 90% seqeuence similarity
+        long-hit : |
+            UniRef reduces family size by protein sequence similarity. UniRef50 is 50% identity over 80% of the length of the sequence, and UniRef90 is 90% identity over 80% of the length of the sequence.
+    fam_exclude_fragments :
+        ui-name : |
+            Exclude Fragments
+        short-hint : |
+            Excludes fragment sequences if selected.
+        long-hint : |
+            'UniProt designates a Sequence Status for each member: Complete if the encoding DNA sequence has both start and stop codons; Fragment if the start and/or stop codon is missing. Approximately 10% of the entries in UniProt are fragments. For the UniRef90 and UniRef50 databases, clusters are excluded if the cluster ID ("representative sequence") is a fragment. UniProt IDs in UniRef90 and UniRef50 clusters with complete cluster IDs are removed from the clusters if they are fragments.'
+
+    blast_sequence :
+        ui-name : |
+            Protein sequence
+        short-hint : |
+            Protein sequence used in BLAST
+        long-hint : |
+            Protein sequence used in BLAST. Retrieves sequences similar to the input sequence.
+    blast_exclude_fragments :
+        ui-name : |
+            Exclude Fragments
+        short-hint : |
+            Excludes fragment sequences if selected.
+        long-hint : |
+            'UniProt designates a Sequence Status for each member: Complete if the encoding DNA sequence has both start and stop codons; Fragment if the start and/or stop codon is missing. Approximately 10% of the entries in UniProt are fragments. For the UniRef90 and UniRef50 databases, clusters are excluded if the cluster ID ("representative sequence") is a fragment. UniProt IDs in UniRef90 and UniRef50 clusters with complete cluster IDs are removed from the clusters if they are fragments.'
+
+    fasta_seq_input_text : 
+        ui-name : |
+            FASTA sequences
+        short-hint : |
+            Protein sequences in FASTA format
+        long-hint : |
+            Protein sequences in FASTA format. These are used in the BLAST to determine similarity, and allow custom sequences to be utilized.
+    fasta_exclude_fragments :
+        ui-name : |
+            Exclude Fragments
+        short-hint : |
+            Excludes fragment sequences if selected.
+        long-hint : |
+            'UniProt designates a Sequence Status for each member: Complete if the encoding DNA sequence has both start and stop codons; Fragment if the start and/or stop codon is missing. Approximately 10% of the entries in UniProt are fragments. For the UniRef90 and UniRef50 databases, clusters are excluded if the cluster ID ("representative sequence") is a fragment. UniProt IDs in UniRef90 and UniRef50 clusters with complete cluster IDs are removed from the clusters if they are fragments.'
+
+    acc_id_input_text :
+        ui-name : |
+            Accession IDs
+        short-hint : |
+            UniProt and/or NCBI protein accession IDs
+        long-hint : |
+            A list of UniProt and/or NCBI protein accession IDs. Sequences from these IDs are retrieved to determine similarity.
+    acc_exclude_fragments :
+        ui-name : |
+            Exclude Fragments
+        short-hint : |
+            Excludes fragment sequences if selected.
+        long-hint : |
+            'UniProt designates a Sequence Status for each member: Complete if the encoding DNA sequence has both start and stop codons; Fragment if the start and/or stop codon is missing. Approximately 10% of the entries in UniProt are fragments. For the UniRef90 and UniRef50 databases, clusters are excluded if the cluster ID ("representative sequence") is a fragment. UniProt IDs in UniRef90 and UniRef50 clusters with complete cluster IDs are removed from the clusters if they are fragments.'
+
+parameter-groups :
+    option_blast :
+        ui-name : |
+            BLAST
+        short-hint : |
+            The EFI-EST BLAST option
+    option_family :
+        ui-name : |
+            Families
+        short-hint : |
+            The EFI-EST Families option
+    option_fasta :
+        ui-name : |
+            FASTA
+        short-hint : |
+            The EFI-EST FASTA option
+    option_accession :
+        ui-name : |
+            Accession IDs
+        short-hint : |
+            The EFI-EST Accession IDs option
+
 
 description : |
-    <p> Take the top ten reads from a Single End reads object.</p>
+    <p>Computes the files necessary for creating an SSN from a protein family.</p>

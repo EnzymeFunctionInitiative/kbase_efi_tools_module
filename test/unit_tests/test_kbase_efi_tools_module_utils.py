@@ -3,7 +3,6 @@ import subprocess
 
 import pytest
 
-from kbase_efi_tools_module.utils import ExampleReadsApp
 
 @pytest.fixture
 def process():

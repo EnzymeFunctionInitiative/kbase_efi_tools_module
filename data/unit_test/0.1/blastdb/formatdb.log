@@ -1,0 +1,36 @@
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/combined.fasta"
+Formatted 87 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/combined.fasta
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/combined_nf.fasta"
+Formatted 87 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/combined_nf.fasta
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref50.fasta"
+Formatted 24 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref50.fasta
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref50_nf.fasta"
+Formatted 24 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref50_nf.fasta
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref90.fasta"
+Formatted 55 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref90.fasta
+
+========================[ Apr 17, 2023 11:36 AM ]========================
+Version 2.2.26 [Sep-21-2011]
+Started database file "/private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref90_nf.fasta"
+Formatted 55 sequences in volume 0
+SUCCESS: formatted database /private_stores/gerlt2/databases/efi/20230106/efi_202301_test/blast/uniref90_nf.fasta
