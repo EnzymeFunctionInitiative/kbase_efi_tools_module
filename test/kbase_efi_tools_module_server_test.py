@@ -7,6 +7,7 @@ import re
 import shutil
 import logging
 from configparser import ConfigParser
+from parameterized import parameterized, parameterized_class
 
 from kbase_efi_tools_module.kbase_efi_tools_moduleImpl import kbase_efi_tools_module
 from kbase_efi_tools_module.kbase_efi_tools_moduleServer import MethodContext
@@ -68,48 +69,34 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # @unittest.skip("Skip test for debugging")
-    def test_est_generate(self):
+    @parameterized.expand([
+                           ("blast,ex_frag,use_file", True, True),
+                           ("blast,ex_frag,no_file", True, False),
+                           ("blast,frag,use_file", False, True),
+                           ("blast,frag,no_file", False, False)
+                           ])
+    def test_est_generate_blast(self, name, exclude_fragments, use_file):
 
-        params = {
-                    "blast":         [
-                                      [True, True, "blast"],
-                                      [True, False, "blast"],
-                                      [False, True, "blast"],
-                                      [False, False, "blast"]
-                                     ],
-                    "family":        [
-                                      [True, "family"],
-                                      [False, "family"]
-                                     ]
-                    #"fasta":         [
-                    #                  [True, "fasta"],
-                    #                  [False, "fasta"]
-                    #                 ],
-                    #"accession":     [
-                    #                  [True, "accession"],
-                    #                  [False, "accession"]
-                    #                 ]
-                }
+        option = "blast"
+        test_opts = [exclude_fragments, use_file, option]
+        test_params = self.get_blast_test_params(test_opts)
+        expected = self.get_expected(test_opts)
+        logging.info("RUNNING TEST " + name)
+        self.run_test("option_" + option, test_params, expected)
+        return True
 
-        for option in params.keys():
-            for test_opts in params[option]:
-                if option == "blast":
-                    test_params = self.get_blast_test_params(test_opts)
-                elif option == "family":
-                    test_params = self.get_family_test_params(test_opts)
-                elif option == "fasta":
-                    test_params = self.get_fasta_test_params(test_opts)
-                elif option == "accession":
-                    test_params = self.get_accession_test_params(test_opts)
-                else:
-                    self.assertTrue(False, "Invalid test option " + option)
-                expected = self.get_expected(test_opts)
-                # there's a bug with subTest that prevents output from showing
-                logging.info("RUNNING TEST " + option)
-                #with self.subTest("Testing "+option, option=option, test_params=test_params, expected=expected):
-                #    self.tu.prep_job_dir()
-                self.run_test("option_" + option, test_params, expected)
+    @parameterized.expand([
+                           ("family,ex_frag", True),
+                           ("family,frag", False)
+                           ])
+    def test_est_generate_family(self, name, exclude_fragments):
 
+        option = "family"
+        test_opts = [exclude_fragments, option]
+        test_params = self.get_family_test_params(test_opts)
+        expected = self.get_expected(test_opts)
+        logging.info("RUNNING TEST " + name)
+        self.run_test("option_" + option, test_params, expected)
         return True
 
     def get_expected(self, test_opts):

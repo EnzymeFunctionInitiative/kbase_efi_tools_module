@@ -104,6 +104,8 @@ class EstGenerateJob(Core):
         print(str(stderr) + "\n\n\n\n")
 
         self.job_type = process_params['type']
+        self.process_params = process_params
+        self.job_name = ""
 
         self.script_file = script_file
 
@@ -113,6 +115,7 @@ class EstGenerateJob(Core):
         if params.get('option_blast') != None:
             process_params['type'] = 'blast'
             seq = params['option_blast'].get('blast_sequence')
+            process_params['input_seq'] = seq
             if seq != None:
                 process_params['seq'] = seq
             else:
@@ -195,26 +198,31 @@ class EstGenerateJob(Core):
         self._mkdir_p(reports_path)
         # Path to the Jinja template. The template can be adjusted to change
         # the report.
-        template_path = os.path.join(TEMPLATES_DIR, "report.html")
+        template_path = os.path.join(TEMPLATES_DIR, "est_generate_report.html")
 
         length_histogram = "length_histogram.png" if self.job_type == "blast" else "length_histogram_uniprot.png"
         alignment_length = "alignment_length.png"
         percent_identity = "percent_identity.png"
+        number_of_edges = "number_of_edges.png"
+        length_histogram_uniref = "length_histogram_uniref.png"
 
         length_histogram_src = os.path.join(self.output_dir, "output", length_histogram)
         alignment_length_src = os.path.join(self.output_dir, "output", alignment_length)
         percent_identity_src = os.path.join(self.output_dir, "output", percent_identity)
+        number_of_edges_src = os.path.join(self.output_dir, "output", number_of_edges)
+        length_histogram_uniref_src = os.path.join(self.output_dir, "output", length_histogram_uniref)
 
         length_histogram_out = os.path.join(reports_path, length_histogram)
         alignment_length_out = os.path.join(reports_path, alignment_length)
         percent_identity_out = os.path.join(reports_path, percent_identity)
+        number_of_edges_out = os.path.join(reports_path, number_of_edges)
+        length_histogram_uniref_out = os.path.join(reports_path, length_histogram_uniref)
 
-        #length_histogram_rel = os.path.join("reports", length_histogram)
-        #alignment_length_rel = os.path.join("reports", alignment_length)
-        #percent_identity_rel = os.path.join("reports", percent_identity)
         length_histogram_rel = length_histogram
         alignment_length_rel = alignment_length
         percent_identity_rel = percent_identity
+        number_of_edges_rel = number_of_edges
+        length_histogram_uniref_rel = length_histogram_uniref
 
         print(os.listdir(self.output_dir + "/output"))
         print(length_histogram_src + " --> " + length_histogram_out)
@@ -222,12 +230,82 @@ class EstGenerateJob(Core):
         shutil.copyfile(length_histogram_src, length_histogram_out)
         shutil.copyfile(alignment_length_src, alignment_length_out)
         shutil.copyfile(percent_identity_src, percent_identity_out)
+        shutil.copyfile(number_of_edges_src, number_of_edges_out)
+        if os.path.isfile(length_histogram_uniref_src):
+            shutil.copyfile(length_histogram_uniref_src, length_histogram_uniref_out)
 
-        template_variables = {
-                'length_histogram_file': length_histogram_rel,
-                'alignment_length_file': alignment_length_rel,
-                'percent_identity_file': percent_identity_rel,
-                }
+        tax_file = "tax.json"
+        tax_file_src = os.path.join(self.output_dir, "output", tax_file)
+        tax_file_out = os.path.join(reports_path, tax_file)
+
+        out_fh = open(tax_file_out, "w")
+        #out_fh.write("{% raw %}\n")
+        tax_json = ""
+        if os.path.isfile(tax_file_src):
+            with open(tax_file_src, "r") as in_fh:
+                tax_json = in_fh.read()
+        else:
+            tax_json = '{"data":{}}'
+        out_fh.write(tax_json)
+        #out_fh.write("\b{% endraw %}\n")
+        out_fh.close()
+
+        conv_ratio = 0
+        #TODO
+
+        show_uniref_len_hist = False
+        use_uniref = False
+        if self.process_params.get("uniref") != None and self.process_params["uniref"]:
+            show_uniref_len_hist = True
+
+        sunburst_app_primary_id_type = "UniProt"
+        has_sunburst_uniref = "false"
+        if self.job_type == "family" or self.job_type == "acc":
+            has_sunburst_uniref = "true"
+        elif self.job_type == "blast":
+            sunburst_app_primary_id_type = "UniProt" #TODO: check if it is using a UniRef database for blasting
+
+        job_type = ""
+        if self.job_type == "family": job_type = "FAMILY"
+        elif self.job_type == "fasta": job_type = "FASTA"
+        elif self.job_type == "acc": job_type = "ACCESSION"
+        elif self.job_type == "blast": job_type = "BLAST"
+
+        input_seq = ""
+        if self.job_type == "blast":
+            input_seq = self.process_params["input_seq"]
+
+        job_info = []
+        job_info.append(["Job Name", self.job_name])
+        job_info.append(["Input Option", job_type])
+        job_info.append(["E-Value for SSN Edge Calculation", "5"])
+        if self.job_type == "family":
+            job_info.append(["Pfam / InterPro Family", ""])
+            job_info.append(["Number of IDs in Pfam / InterPro Family", ""])
+        job_info.append(["Domain Option", "off"])
+        if use_uniref:
+            job_info.append(["UniRef Version", use_uniref])
+        if self.job_type == "family":
+            job_info.append(["Number of Cluster IDs in UniRef" + str(use_uniref) + " Family", ""])
+        job_info.append(["Exclude Fragments", "yes" if self.process_params["exclude_fragments"] else "no"])
+        job_info.append(["Total Number of Sequences in Dataset", ""])
+        job_info.append(["Total Number of Edges", ""])
+        job_info.append(["Number of Unique Sequences", ""])
+
+        template_variables = dict(
+                length_histogram_file = length_histogram_rel,
+                alignment_length_file = alignment_length_rel,
+                percent_identity_file = percent_identity_rel,
+                number_of_edges_file  = number_of_edges_rel,
+                length_histogram_uniref_file = length_histogram_uniref_rel,
+                conv_ratio = conv_ratio,
+                job_info = job_info,
+                show_uniref_len_hist = show_uniref_len_hist,
+                has_sunburst_uniref = has_sunburst_uniref,
+                sunburst_app_primary_id_type = sunburst_app_primary_id_type,
+                tax_data = tax_json,
+                input_seq = input_seq,
+            )
 
         # The KBaseReport configuration dictionary
         config = dict(

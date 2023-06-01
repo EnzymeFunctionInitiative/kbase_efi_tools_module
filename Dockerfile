@@ -6,7 +6,7 @@ RUN apt-get -y install libpng-dev libargtable2-dev zlib1g-dev libgd-dev libfreet
 RUN apt-get -y install cpanminus unzip git r-base dos2unix
 
 RUN pip install --upgrade pip
-RUN pip install weblogo
+RUN pip install weblogo pytest-subtests parameterized
 
 
 ###################################################################################################
@@ -33,7 +33,7 @@ RUN echo 'export PATH=$PATH:/apps/bin' > /apps/env.sh
 
 #############################
 # Install BLAST
-RUN curl -sL https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.13.0+-x64-linux.tar.gz > /build/ncbi-blast-2.13.0+-x64-linux.tar.gz
+RUN curl -sL https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/ncbi-blast-2.13.0+-x64-linux.tar.gz > /build/ncbi-blast-2.13.0+-x64-linux.tar.gz
 #COPY ncbi-blast-2.13.0+-x64-linux.tar.gz /build/ncbi-blast-2.13.0+-x64-linux.tar.gz
 RUN tar zxvf /build/ncbi-blast-2.13.0+-x64-linux.tar.gz
 RUN mv /build/ncbi-blast-2.13.0+/bin /apps/ncbi-blast-2.13.0+
@@ -154,8 +154,6 @@ RUN cp /apps/EFIShared/db_conf.sh.example /apps/EFIShared/testing_db_conf.sh
 RUN perl /apps/EFIShared/edit_env_conf.pl /apps/EFIShared/testing_db_conf.sh EFI_SEQ_DB=$TESTPATH/seq_mapping.sqlite EFI_DB=$TESTPATH/metadata.sqlite EFI_DB_DIR=$TESTPATH/blastdb EFI_DIAMOND_DB_DIR=$TESTPATH/diamonddb EFI_FASTA_PATH=$TESTPATH/uniprot.fasta
 RUN cp /apps/EST/env_conf.sh.example /apps/EST/testing_env_conf.sh
 RUN perl /apps/EFIShared/edit_env_conf.pl /apps/EST/testing_env_conf.sh EFI_EST=/apps/EST EFI_CONFIG=/apps/efi.config EFI_NP=4
-
-RUN pip install pytest-subtests
 
 
 ### For EFI stand-alone
