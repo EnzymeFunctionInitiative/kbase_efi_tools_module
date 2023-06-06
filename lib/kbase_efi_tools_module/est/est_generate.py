@@ -8,6 +8,7 @@ import json
 import shutil
 import errno
 import re
+from pathlib import Path
 
 # This is the SFA base package which provides the Core app class.
 from base import Core
@@ -181,6 +182,9 @@ class EstGenerateJob(Core):
 
         stdout, stderr = get_streams(process)
 
+        script_contents = Path(self.script_file).read_text()
+        print(script_contents)
+        print(os.listdir("/kb/module/work/tmp/job/job_temp/output"))
         print("### OUTPUT FROM GENERATE ######################################################################################\n")
         print(str(stdout) + "\n---------\n")
         print("### ERR\n")
