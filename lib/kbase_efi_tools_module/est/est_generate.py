@@ -7,6 +7,7 @@ import uuid
 import json
 import shutil
 import errno
+import re
 
 # This is the SFA base package which provides the Core app class.
 from base import Core
@@ -115,6 +116,7 @@ class EstGenerateJob(Core):
         if params.get('option_blast') != None:
             process_params['type'] = 'blast'
             seq = params['option_blast'].get('blast_sequence')
+            seq = re.sub('[ \t\r\n]', '', seq)
             process_params['input_seq'] = seq
             if seq != None:
                 process_params['seq'] = seq
