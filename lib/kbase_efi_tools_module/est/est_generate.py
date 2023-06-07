@@ -183,12 +183,18 @@ class EstGenerateJob(Core):
         stdout, stderr = get_streams(process)
 
         script_contents = Path(self.script_file).read_text()
-        print(script_contents)
         print(os.listdir("/kb/module/work/tmp/job/job_temp/output"))
+        print("### SCRIPT OUTPUT #############################################################################################\n")
+        print(script_contents)
+        print("### FILE OUTPUT ###############################################################################################\n")
+        print(Path("/kb/module/work/tmp/job/job_temp/output/blastfinal.tab"))
+        print("########\n")
+        print(Path("/kb/module/work/tmp/job/job_temp/output/allsequences.tab"))
         print("### OUTPUT FROM GENERATE ######################################################################################\n")
         print(str(stdout) + "\n---------\n")
         print("### ERR\n")
         print(str(stderr) + "\n\n\n\n")
+        print("###############################################################################################################\n")
 
         return True
 
