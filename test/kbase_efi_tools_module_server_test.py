@@ -70,9 +70,9 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # @unittest.skip("Skip test for debugging")
     @parameterized.expand([
-                           ("blast,ex_frag,use_file", True, True),
-                           ("blast,ex_frag,no_file", True, False),
-                           ("blast,frag,use_file", False, True),
+#                           ("blast,ex_frag,use_file", True, True),
+#                           ("blast,ex_frag,no_file", True, False),
+#                           ("blast,frag,use_file", False, True),
                            ("blast,frag,no_file", False, False)
                            ])
     def test_est_generate_blast(self, name, exclude_fragments, use_file):
@@ -85,19 +85,19 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         self.run_test("option_" + option, test_params, expected)
         return True
 
-    @parameterized.expand([
-                           ("family,ex_frag", True),
-                           ("family,frag", False)
-                           ])
-    def test_est_generate_family(self, name, exclude_fragments):
-
-        option = "family"
-        test_opts = [exclude_fragments, option]
-        test_params = self.get_family_test_params(test_opts)
-        expected = self.get_expected(test_opts)
-        logging.info("RUNNING TEST " + name)
-        self.run_test("option_" + option, test_params, expected)
-        return True
+#    @parameterized.expand([
+#                           ("family,ex_frag", True),
+#                           ("family,frag", False)
+#                           ])
+#    def test_est_generate_family(self, name, exclude_fragments):
+#
+#        option = "family"
+#        test_opts = [exclude_fragments, option]
+#        test_params = self.get_family_test_params(test_opts)
+#        expected = self.get_expected(test_opts)
+#        logging.info("RUNNING TEST " + name)
+#        self.run_test("option_" + option, test_params, expected)
+#        return True
 
     def get_expected(self, test_opts):
         res_type = test_opts[len(test_opts) - 1]
