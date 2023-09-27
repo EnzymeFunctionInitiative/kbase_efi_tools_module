@@ -158,6 +158,7 @@ RUN perl /apps/EFIShared/edit_env_conf.pl /apps/EST/testing_env_conf.sh EFI_EST=
 
 ### For EFI stand-alone
 #COPY ./scripts/est_entrypoint.sh /apps/entrypoint.sh
+#COPY ./test/est_test.py /apps/est_test.py
 #ENTRYPOINT [ "/bin/bash", "/apps/entrypoint.sh" ]
 
 WORKDIR /kb/module

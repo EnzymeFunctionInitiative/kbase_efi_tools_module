@@ -67,43 +67,37 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
             cls.wsClient.delete_workspace({"workspace": cls.wsName})
             print("Test workspace was deleted")
 
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    # @unittest.skip("Skip test for debugging")
-    @parameterized.expand([
+#    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
+#    # @unittest.skip("Skip test for debugging")
+#    @parameterized.expand([
 #                           ("blast,ex_frag,use_file", True, True),
 #                           ("blast,ex_frag,no_file", True, False),
 #                           ("blast,frag,use_file", False, True),
-                           ("blast,frag,no_file", False, False)
-                           ])
-    def test_est_generate_blast(self, name, exclude_fragments, use_file):
-
-        option = "blast"
-        test_opts = [exclude_fragments, use_file, option]
-        test_params = self.get_blast_test_params(test_opts)
-        expected = self.get_expected(test_opts)
-        logging.info("RUNNING TEST " + name)
-        self.run_test("option_" + option, test_params, expected)
-        return True
-
-#    @parameterized.expand([
-#                           ("family,ex_frag", True),
-#                           ("family,frag", False)
+#                           ("blast,frag,no_file", False, False)
 #                           ])
-#    def test_est_generate_family(self, name, exclude_fragments):
+#    def test_est_generate_blast(self, name, exclude_fragments, use_file):
 #
-#        option = "family"
-#        test_opts = [exclude_fragments, option]
-#        test_params = self.get_family_test_params(test_opts)
-#        expected = self.get_expected(test_opts)
+#        option = "blast"
+#        test_opts = [exclude_fragments, use_file, option]
+#        test_params = self.tu.get_blast_test_params(test_opts)
+#        expected = self.tu.get_expected(test_opts)
 #        logging.info("RUNNING TEST " + name)
 #        self.run_test("option_" + option, test_params, expected)
 #        return True
 
-    def get_expected(self, test_opts):
-        res_type = test_opts[len(test_opts) - 1]
-        exclude_fragments = test_opts[0]
-        expected = self.excl_frag_num_seq_data[res_type] if exclude_fragments else self.with_frag_num_seq_data[res_type]
-        return expected
+    @parameterized.expand([
+                           ("family,ex_frag", True),
+                           ("family,frag", False)
+                           ])
+    def test_est_generate_family(self, name, exclude_fragments):
+
+        option = "family"
+        test_opts = [exclude_fragments, option]
+        test_params = self.tu.get_family_test_params(test_opts)
+        expected = self.tu.get_expected(test_opts)
+        logging.info("RUNNING TEST " + name)
+        self.run_test("option_" + option, test_params, expected)
+        return True
 
     #def test_est_generate_with_fragments(self):
 
@@ -184,38 +178,6 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
     #    acc_file_job_path = self.tu.get_job_output_dir() + "/id_list.txt"
     #    acc_data = {"acc_input_file": acc_file_job_path, "acc_exclude_fragments": test_params["exclude_fragments"]}
     #    self.run_test("option_accession", acc_data, num_seq_data)
-
-
-    def get_blast_test_params(self, test_opts):
-        test_blast_seq_file = self.tu.get_test_data_file("blast")
-        blast_seq = self.tu.read_data_from_file(test_blast_seq_file) # Read the test file data
-        blast_file_path = self.tu.get_job_output_dir() + "/query.fa"
-        self.tu.save_data_to_file(">INPUT_ID\n"+blast_seq+"\n", blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
-
-        blast_data = {"blast_exclude_fragments": test_opts[0]}
-        if test_opts[1]:
-            blast_data["sequence_file"] = blast_file_path
-        else:
-            blast_data["blast_sequence"] = blast_seq
-
-        return blast_data
-
-    def get_family_test_params(self, test_opts):
-        fam_name = "PF05544"
-        fam_data = {"fam_family_name": fam_name, "fam_use_uniref": "none", "fam_exclude_fragments": test_opts[0]}
-        return fam_data
-
-    def get_fasta_test_params(self, test_opts):
-        fasta_file = self.tu.get_test_data_file("fasta")
-        fasta_file_job_path = self.tu.get_job_output_dir() + "/input.fa"
-        fasta_data = {"fasta_file": fasta_file_job_path, "fasta_exclude_fragments": test_opts[0]}
-        return fasta_data
-
-    def get_accession_test_params(self, test_opts):
-        acc_file = self.tu.get_test_data_file("accession")
-        acc_file_job_path = self.tu.get_job_output_dir() + "/id_list.txt"
-        acc_data = {"acc_input_file": acc_file_job_path, "acc_exclude_fragments": test_opts[0]}
-        return acc_data
 
 
     def run_test(self, option_key, option_data, num_expected):
