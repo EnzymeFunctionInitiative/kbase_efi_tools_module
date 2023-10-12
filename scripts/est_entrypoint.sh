@@ -1,8 +1,9 @@
 #!/bin/bash
 
- [ "${1}" = "est" ] ; then
+ if [ "${1}" = "est" ] ; then
     out_dir=$2
     json=$3
+    database_dir=$4
     source /apps/env.sh
     source /apps/blast_legacy.sh
     source /apps/EST/env_conf.sh
@@ -13,7 +14,12 @@
     bash $script_file
 elif [ "${1}" = "test" ] ; then
     echo "Running test"
-    python /apps/est_test.py
+    if [ "${2}" = "" ]; then
+        echo "Require output dir as second parameter"
+        exit 1
+    fi
+    export JOB_DIR=$2
+    /bin/bash /apps/test/run_standalone.sh
 elif [ "${1}" = "bash" ] ; then
     bash
 elif [ "${1}" = "init" ] ; then

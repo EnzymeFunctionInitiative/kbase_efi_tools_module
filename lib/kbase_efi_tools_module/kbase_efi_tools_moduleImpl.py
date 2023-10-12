@@ -11,8 +11,9 @@ from installed_clients.KBaseReportClient import KBaseReport
 from installed_clients.ReadsUtilsClient import ReadsUtils
 from base import Core
 
+from .est.est_generate import KbEstGenerateJob
 from .est.est_generate import EstGenerateJob
-from .est.est_analysis import EstAnalysisJob
+from .est.est_analysis import KbEstAnalysisJob
 
 #END_HEADER
 
@@ -83,7 +84,7 @@ class kbase_efi_tools_module:
         if est_conf != None:
             config['efi_est_config'] = est_conf
 
-        job = EstGenerateJob(ctx, config)
+        job = KbEstGenerateJob(ctx, config)
 
         job.create_job(params)
 
@@ -118,7 +119,30 @@ class kbase_efi_tools_module:
         # return variables are: output
         #BEGIN run_est_analysis_app
 
-        
+        #is_valid = EstAnalysisJob.validate_params(params)
+
+        config = dict(
+            callback_url=self.callback_url,
+            shared_folder=self.shared_folder,
+            clients=dict(
+                KBaseReport=KBaseReport,
+            ),
+        )
+
+        db_conf = params.get('efi_db_config')
+        if db_conf != None:
+            config['efi_db_config'] = db_conf
+        est_conf = params.get('efi_est_config')
+        if est_conf != None:
+            config['efi_est_config'] = est_conf
+
+        job = KbEstAnalysisJob(ctx, config)
+
+        job.create_job(params)
+
+        job.start_job()
+
+        output = job.generate_report(params)
 
         #END run_est_analysis_app
 
@@ -128,6 +152,7 @@ class kbase_efi_tools_module:
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

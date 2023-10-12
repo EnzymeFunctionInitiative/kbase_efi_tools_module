@@ -10,6 +10,7 @@ import shutil
 # This is the SFA base package which provides the Core app class.
 from base import Core
 from installed_clients.DataFileUtilClient import DataFileUtil
+from ..utils.utils import EfiUtils as utils
 
 MODULE_DIR = "/kb/module"
 TEMPLATES_DIR = os.path.join(MODULE_DIR, "lib/templates")
@@ -23,11 +24,9 @@ def get_streams(process):
     return (stdout.decode("utf-8", "ignore"), stderr.decode("utf-8", "ignore"))
 
 
-class EstAnalysisJob(Core):
+class EstAnalysisJob:
 
-    def __init__(self, ctx, config, clients_class=None):
-        super().__init__(ctx, config, clients_class)
-
+    def __init__(self, config, shared_folder):
         #TODO: make this a config variable
         est_home = '/apps/EST'
         db_conf = config.get('efi_db_config')
@@ -36,39 +35,51 @@ class EstAnalysisJob(Core):
         else:
             self.efi_db_config = '/apps/EFIShared/db_conf.sh'
 
-        # self.shared_folder is defined in the Core App class.
-        self.output_dir = os.path.join(self.shared_folder, 'job_temp')
-        self.ws_url = config['workspace-url']
-        self.callback_url = config['SDK_CALLBACK_URL']
+        est_conf = config.get('efi_est_config')
+        if est_conf != None:
+            self.efi_est_config = est_conf
+        else:
+            self.efi_est_config = '/apps/EST/env_conf.sh'
 
-        self.dfu = DataFileUtil(self.callback_url)
+        #TODO:
+        self.input_dataset_zip = config.get('input_dataset_zip')
 
-        self._mkdir_p(self.output_dir)
+        self.shared_folder = shared_folder
+        self.output_dir = os.path.join(shared_folder, 'job_temp')
+        utils.mkdir_p(self.output_dir)
+
         self.script_file = ''
         self.est_dir = est_home
-        self.report = self.clients.KBaseReport
-        #TODO: make a more robust way of doing this
-        self.est_env = ['/apps/EST/env_conf.sh', '/apps/EFIShared/env_conf.sh', '/apps/env.sh', '/apps/blast_legacy.sh', self.efi_db_config]
-
-    #TODO: implement this
-    def validate_params(params):
-        return True
+        self.est_env = [self.efi_est_config, '/apps/EFIShared/env_conf.sh', '/apps/env.sh', '/apps/blast_legacy.sh', self.efi_db_config]
 
     def create_job(self, params):
 
+        if self.input_dataset_zip == None:
+            return None
+
         create_job_pl = os.path.join(self.est_dir, 'create_job.pl')
 
+        # The input and output directories for the analysis job are the same, because we copy the transfer file in and unzip it.
         process_args = [create_job_pl, '--job-dir', self.output_dir]
         if params.get('job_id') != None:
             process_args.extend(['--job-id', params['job_id']])
 
+        if params.get('ascore') == None:
+            return None
+
         print(params)
 
-        process_params = {'type': '', 'exclude_fragments': False}
-        self.get_blast_params(params, process_params)
-        self.get_family_params(params, process_params)
-        self.get_fasta_params(params, process_params)
-        self.get_accession_params(params, process_params)
+        process_params = {'type': 'analysis'}
+        process_params['a_job_dir'] = self.output_dir
+        process_params['zip_transfer'] = self.input_dataset_zip
+        process_params['filter'] = params.get('filter', "eval")
+        process_params['minval'] = params.get('ascore')
+        if params.get('minlen') != None:
+            process_params['minlen'] = params['min_len']
+        if params.get('maxlen') != None:
+            process_params['maxlen'] = params['max_len']
+        if params.get('uniref_version') != None:
+            process_params['uniref_version'] = params['uniref_version']
 
         json_str = json.dumps(process_params)
 
@@ -145,7 +156,6 @@ class EstAnalysisJob(Core):
             if params['option_accession'].get('acc_exclude_fragments') and params['option_accession']['acc_exclude_fragments'] == 1:
                 process_params['exclude_fragments'] = 1
 
-
     def start_job(self):
         if not os.path.exists(self.script_file):
             #TODO: throw error
@@ -169,19 +179,18 @@ class EstAnalysisJob(Core):
 
         return True
 
-
+    def get_reports_path(self):
+        reports_path = os.path.join(self.shared_folder, "reports")
+        return reports_path
 
     def generate_report(self, params):
-        #TODO:
+
         """
         This method is where to define the variables to pass to the report.
         """
         # This path is required to properly use the template.
-        reports_path = os.path.join(self.shared_folder, "reports")
-        self._mkdir_p(reports_path)
-        # Path to the Jinja template. The template can be adjusted to change
-        # the report.
-        template_path = os.path.join(TEMPLATES_DIR, "report.html")
+        reports_path = self.get_reports_path()
+        utils.mkdir_p(reports_path)
 
         length_histogram = "length_histogram_uniprot.png"
         alignment_length = "alignment_length.png"
@@ -215,6 +224,37 @@ class EstAnalysisJob(Core):
                 'percent_identity_file': percent_identity_rel,
                 }
 
+        return template_variables
+
+
+
+
+class KbEstAnalysisJob(Core):
+
+    def __init__(self, ctx, config, clients_class=None):
+        super().__init__(ctx, config, clients_class)
+
+        # self.shared_folder is defined in the Core App class.
+        self.job_interface = EstAnalysisJob(config, self.shared_folder)
+        self.ws_url = config['workspace-url']
+        self.callback_url = config['SDK_CALLBACK_URL']
+        self.dfu = DataFileUtil(self.callback_url)
+
+
+    def validate_params(params):
+        return EstAnalysisJob.validate_params(params)
+
+    def create_job(self, params):
+        return self.job_interface.create_job(params)
+
+    def start_job(self):
+        return self.job_interface.start_job()
+
+    def generate_report(self, params):
+
+        reports_path = self.job_interface.get_reports_path()
+        template_variables = self.job_interface.generate_report()
+
         # The KBaseReport configuration dictionary
         config = dict(
             report_name = f"EfiFamilyApp_{str(uuid.uuid4())}",
@@ -223,26 +263,15 @@ class EstAnalysisJob(Core):
             workspace_name = params["workspace_name"],
         )
         
+        # Path to the Jinja template. The template can be adjusted to change
+        # the report.
+        template_path = os.path.join(TEMPLATES_DIR, "report.html")
+
         output_report = self.create_report_from_template(template_path, config)
         output_report["shared_folder"] = self.shared_folder
         print("OUTPUT REPORT\n")
         print(str(output_report) + "\n")
         return output_report
 
-
-
-    def _mkdir_p(self, path):
-        """
-        _mkdir_p: make directory for given path
-        """
-        if not path:
-            return
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
 
 
