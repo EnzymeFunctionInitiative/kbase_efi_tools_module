@@ -6,13 +6,14 @@ import subprocess
 import uuid
 import json
 import shutil
-import errno
 import re
 from pathlib import Path
 from os.path import exists
 
 # This is the SFA base package which provides the Core app class.
 from base import Core
+#from installed_clients.DataFileUtilClient import DataFileUtil
+from ..utils.utils import EfiUtils as utils
 
 MODULE_DIR = "/kb/module"
 TEMPLATES_DIR = os.path.join(MODULE_DIR, "lib/templates")
@@ -26,10 +27,9 @@ def get_streams(process):
     return (stdout.decode("utf-8", "ignore"), stderr.decode("utf-8", "ignore"))
 
 
-class EstGenerateJob(Core):
+class EstGenerateJob:
 
-    def __init__(self, ctx, config, clients_class=None):
-        super().__init__(ctx, config, clients_class)
+    def __init__(self, config, shared_folder):
 
         #TODO: make this a config variable
         est_home = '/apps/EST'
@@ -45,11 +45,10 @@ class EstGenerateJob(Core):
         else:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
-        # self.shared_folder is defined in the Core App class. It is also unique, time-stamped.
+        self.shared_folder = shared_folder
         self.output_dir = os.path.join(self.shared_folder, 'job_temp')
-        #self.output_dir = self.shared_folder
-        
         self._mkdir_p(self.output_dir)
+
         self.script_file = ''
         self.est_dir = est_home
         self.report = self.clients.KBaseReport
@@ -58,6 +57,7 @@ class EstGenerateJob(Core):
         #We need to keep track of the workspace objects use or create
         self.input_objects = []
         self.output_objects = []
+
         #TODO: make a more robust way of doing this
         self.est_env = [self.efi_est_config, '/apps/EFIShared/env_conf.sh', '/apps/env.sh', '/apps/blast_legacy.sh', self.efi_db_config]
 
@@ -168,7 +168,6 @@ class EstGenerateJob(Core):
             if params['option_accession'].get('acc_exclude_fragments') and params['option_accession']['acc_exclude_fragments'] == 1:
                 process_params['exclude_fragments'] = 1
 
-
     def start_job(self):
         if not os.path.exists(self.script_file):
             #TODO: throw error
@@ -186,14 +185,14 @@ class EstGenerateJob(Core):
         stdout, stderr = get_streams(process)
 
         script_contents = Path(self.script_file).read_text()
-        print(os.listdir("/kb/module/work/tmp/job/job_temp/output"))
+        print(os.listdir(self.output_dir + "/output"))
         print("### SCRIPT OUTPUT #############################################################################################\n")
         print(script_contents)
         print("### FILE OUTPUT ###############################################################################################\n")
-        junk = Path("/kb/module/work/tmp/job/job_temp/output/blastfinal.tab").read_text()
+        junk = Path(self.output_dir + "/output/blastfinal.tab").read_text()
         print(junk[0:1000] + "\n")
         print("########\n")
-        junk = Path("/kb/module/work/tmp/job/job_temp/output/allsequences.fa").read_text()
+        junk = Path(self.output_dir + "/output/allsequences.fa").read_text()
         print(junk[0:1000] + "\n")
         print("### OUTPUT FROM GENERATE ######################################################################################\n")
         print(str(stdout) + "\n---------\n")
@@ -272,11 +271,8 @@ class EstGenerateJob(Core):
         This method is where to define the variables to pass to the report.
         """
         # This path is required to properly use the template.
-        reports_path = os.path.join(self.shared_folder, "reports")
-        self._mkdir_p(reports_path)
-        # Path to the Jinja template. The template can be adjusted to change
-        # the report.
-        template_path = os.path.join(TEMPLATES_DIR, "est_generate_report.html")
+        reports_path = self.get_reports_path()
+        utils.mkdir_p(reports_path)
 
         length_histogram = "length_histogram.png" if self.job_type == "blast" else "length_histogram_uniprot.png"
         alignment_length = "alignment_length.png"
@@ -385,6 +381,43 @@ class EstGenerateJob(Core):
                 input_seq = input_seq,
             )
 
+        return template_variables
+
+    def get_reports_path(self):
+        reports_path = os.path.join(self.shared_folder, "reports")
+        return reports_path
+
+
+
+
+
+class KbEstGenerateJob(Core):
+
+    def __init__(self, ctx, config, clients_class=None):
+        super().__init__(ctx, config, clients_class)
+
+        # shared_folder is defined in the Core App class. It is also unique, time-stamped.
+        self.job_interface = EstGenerateJob(config, self.shared_folder)
+
+        #self.ws_url = config['workspace-url']
+        self.callback_url = config['callback_url']
+        self.dfu = DataFileUtil(self.callback_url)
+        self.report = self.clients.KBaseReport
+
+    def validate_params(params):
+        return self.job_interface.validate_params(params)
+
+    def create_job(self, params):
+        return self.job_interface.create_job(params)
+
+    def start_job(self):
+        return self.job_interface.start_job()
+
+    def generate_report(self, params):
+
+        reports_path = self.job_interface.get_reports_path()
+        template_variables = self.job_interface.generate_report()
+
         # The KBaseReport configuration dictionary
         config = dict(
             report_name = f"EfiFamilyApp_{str(uuid.uuid4())}",
@@ -393,26 +426,14 @@ class EstGenerateJob(Core):
             workspace_name = params["workspace_name"],
         )
         
+        # Path to the Jinja template. The template can be adjusted to change
+        # the report.
+        template_path = os.path.join(TEMPLATES_DIR, "est_generate_report.html")
+
         output_report = self.create_report_from_template(template_path, config)
         output_report["shared_folder"] = self.shared_folder
         print("OUTPUT REPORT\n")
         print(str(output_report) + "\n")
         return output_report
-
-
-
-    def _mkdir_p(self, path):
-        """
-        _mkdir_p: make directory for given path
-        """
-        if not path:
-            return
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
 
 
