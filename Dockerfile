@@ -11,6 +11,11 @@ RUN pip install weblogo pytest-subtests parameterized
 
 ###################################################################################################
 # Install Perl modules
+RUN apt-get -y install libarray-utils-perl libcapture-tiny-perl libconfig-inifiles-perl libdata-uuid-perl
+RUN apt-get -y install libdbi-perl libdbd-mysql-perl libdbd-mariadb-perl libdbd-sqlite3-perl
+RUN apt-get -y install libfile-slurp-perl libgd-perl libimager-perl libjson-perl liblist-moreutils-perl
+RUN apt-get -y install liblog-message-simple-perl libmoose-perl libstatistics-descriptive-perl libstatistics-r-perl
+RUN apt-get -y install libtest-exception-perl libxml-libxml-perl libxml-parser-perl libxml-writer-perl
 RUN mkdir /build
 WORKDIR /build
 COPY cpanfile /build/cpanfile
@@ -119,7 +124,8 @@ COPY ./requirements.txt /kb/module/requirements.txt
 ENV PIP_PROGRESS_BAR=off
 #RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN pip install -e git+https://github.com/kbase-sfa-2021/sfa.git#egg=base
+#RUN pip install -e git+https://github.com/kbase-sfa-2021/sfa.git#egg=base
+RUN pip install -e git+https://github.com/nilsoberg/sfa.git@clients-callable#egg=base
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
 RUN chmod -R a+rw /kb/module
