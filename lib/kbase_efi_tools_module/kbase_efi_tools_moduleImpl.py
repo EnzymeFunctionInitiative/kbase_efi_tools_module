@@ -8,6 +8,8 @@ import datetime
 import random
 
 from installed_clients.KBaseReportClient import KBaseReport
+from installed_clients.DataFileUtilClient import DataFileUtil
+from installed_clients.WorkspaceClient import Workspace
 from installed_clients.ReadsUtilsClient import ReadsUtils
 from base import Core
 
@@ -46,6 +48,7 @@ class kbase_efi_tools_module:
         #BEGIN_CONSTRUCTOR
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shared_folder = config['scratch'] + "/job"
+        self.token = os.environ['KB_AUTH_TOKEN']
         #now = datetime.datetime.now()
         #suffix = now.strftime("%Y%m%dT%H.%M.%S.r") + str(random.randrange(1000))
         #self.shared_folder = config['scratch'] + "/job_" + suffix
@@ -73,7 +76,9 @@ class kbase_efi_tools_module:
             callback_url=self.callback_url,
             shared_folder=self.shared_folder,
             clients=dict(
-                KBaseReport=KBaseReport,
+                KBaseReport=KBaseReport(self.callback_url,token=self.token),
+                DataFileUtil=DataFileUtil(self.callback_url,token=self.token),
+                Workspace=Workspace(self.config["workspace-url"], token=self.token)
             ),
         )
 

@@ -8,10 +8,11 @@ import json
 import shutil
 import re
 from pathlib import Path
+from os.path import exists
 
 # This is the SFA base package which provides the Core app class.
 from base import Core
-from installed_clients.DataFileUtilClient import DataFileUtil
+#from installed_clients.DataFileUtilClient import DataFileUtil
 from ..utils.utils import EfiUtils as utils
 
 MODULE_DIR = "/kb/module"
@@ -46,10 +47,17 @@ class EstGenerateJob:
 
         self.shared_folder = shared_folder
         self.output_dir = os.path.join(self.shared_folder, 'job_temp')
-        utils.mkdir_p(self.output_dir)
+        self._mkdir_p(self.output_dir)
 
         self.script_file = ''
         self.est_dir = est_home
+        self.report = self.clients.KBaseReport
+        self.wsclient = self.clients.Workspace
+        self.dfu = self.clients.DataFileUtil
+        #We need to keep track of the workspace objects use or create
+        self.input_objects = []
+        self.output_objects = []
+
         #TODO: make a more robust way of doing this
         self.est_env = [self.efi_est_config, '/apps/EFIShared/env_conf.sh', '/apps/env.sh', '/apps/blast_legacy.sh', self.efi_db_config]
 
@@ -58,6 +66,8 @@ class EstGenerateJob:
         return True
 
     def create_job(self, params):
+        self.input_objects = []
+        self.output_objects = []
 
         create_job_pl = os.path.join(self.est_dir, 'create_job.pl')
 
@@ -192,11 +202,70 @@ class EstGenerateJob:
 
         return True
 
-    def get_reports_path(self):
-        reports_path = os.path.join(self.shared_folder, "reports")
-        return reports_path
+    #Use this function to save the output object to the KBase workspace
+    def save_output(self, params,process_params):
+        #I am assuming params contains the following fields:workspace, sequenceset_ref, output_name
+        #I am assuming process_params contains the following fields:output_file, input_sequence_count, input_type, input_family_id, evalue_for_ssn_calculation, domain_option, exlude_fragments, database_version, uniref_version, ids_in_pfam_family, cluster_ids_in_uniref_family, total_sequences_in_dataset, total_edges, unique_sequences, convergence_ratio
+        
+        #First saving output file to KBase S3 using data file util
+        handle_info = None
+        if exists(process_params["output_file"]):
+            handle_info = self.dfu.file_to_shock({'file_path': process_params["output_file"],'make_handle': 1, 'pack': 'gzip'})
 
-    def generate_report(self):
+        #Next creating workspace object to house the output file handle
+        if handle_info:
+            new_object = {
+                "gen_file":handle_info['handle']['hid'],
+                "sequenceset":params['sequenceset_ref'],
+                "input_sequence_count":process_params["input_sequence_count"],
+                "input_type":process_params["input_type"],
+                "input_family_id":process_params["input_family_id"],
+                "evalue_for_ssn_calculation":process_params["evalue_for_ssn_calculation"],
+                "domain_option":process_params["domain_option"],
+                "exlude_fragments":process_params["exlude_fragments"],
+                "database_version":process_params["database_version"],
+                "uniref_version":process_params["uniref_version"],
+                "ids_in_pfam_family":process_params["ids_in_pfam_family"],
+                "cluster_ids_in_uniref_family":process_params["cluster_ids_in_uniref_family"],
+                "total_sequences_in_dataset":process_params["total_sequences_in_dataset"],
+                "total_edges":process_params["total_edges"],
+                "unique_sequences":process_params["unique_sequences"],
+                "convergence_ratio":process_params["convergence_ratio"]
+            }
+            
+            #Tracking that a new workspace object has been created so we can include this information in the report
+            self.output_objects.append({"ref":str(params["workspace"])+"/"+params["output_name"],"description":"Precomputed similarities for generating sequence similarity networks"})
+            
+            #Setting up the parameters for saving the object
+            save_params = {
+                'objects': [{
+                    'data': new_object,
+                    'name': params["output_name"],
+                    'type': "SequenceSimilarityNetworks.ComputedProteinSims",
+                    'meta': {},
+                    'provenance': [{
+                        'description': "EST Generate App Output",
+                        'input_ws_objects': self.input_objects,
+                        'method': "run_est_generate_app",
+                        'script_command_line': "",
+                        'method_params': [params],
+                        'service': "kbase_efi_tools_module",
+                        'service_ver': "0.0.1",
+                    }]
+                }]
+            }
+
+            #Handling if the input workspace is an ID or name
+            if isinstance(params["workspace"],int):
+                save_params["id"] = params["workspace"]
+            else:
+                save_params["workspace"] = params["workspace"]
+
+            #Saving the object to the workspace  
+            return self.wsclient.save_objects(save_params)
+        return None
+
+    def generate_report(self, params):
         #TODO:
         """
         This method is where to define the variables to pass to the report.
@@ -314,6 +383,9 @@ class EstGenerateJob:
 
         return template_variables
 
+    def get_reports_path(self):
+        reports_path = os.path.join(self.shared_folder, "reports")
+        return reports_path
 
 
 
