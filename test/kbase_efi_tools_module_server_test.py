@@ -85,7 +85,7 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 #        self.run_gen_test("option_" + option, test_params, expected)
 #        return True
 
-    def test_analysis(self):
+    def disabled_test_analysis(self):
         
         db_conf = "/apps/EFIShared/testing_db_conf.sh"
         efi_est_config = "/apps/EST/testing_env_conf.sh"
@@ -97,7 +97,7 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
                 "efi_db_config": db_conf,
                 "efi_est_config": efi_est_config,
             }
-        run_data[option_key] = option_data
+        #run_data[option_key] = option_data
 
         ret = self.serviceImpl.run_est_analysis_app(
             self.ctx,

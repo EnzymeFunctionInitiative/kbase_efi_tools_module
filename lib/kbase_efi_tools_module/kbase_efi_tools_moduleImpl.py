@@ -49,6 +49,7 @@ class kbase_efi_tools_module:
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shared_folder = config['scratch'] + "/job"
         self.token = os.environ['KB_AUTH_TOKEN']
+        self.config = config
         #now = datetime.datetime.now()
         #suffix = now.strftime("%Y%m%dT%H.%M.%S.r") + str(random.randrange(1000))
         #self.shared_folder = config['scratch'] + "/job_" + suffix

@@ -29,7 +29,7 @@ def get_streams(process):
 
 class EstGenerateJob:
 
-    def __init__(self, config, shared_folder):
+    def __init__(self, config, shared_folder, clients):
 
         #TODO: make this a config variable
         est_home = '/apps/EST'
@@ -47,13 +47,12 @@ class EstGenerateJob:
 
         self.shared_folder = shared_folder
         self.output_dir = os.path.join(self.shared_folder, 'job_temp')
-        self._mkdir_p(self.output_dir)
+        utils.mkdir_p(self.output_dir)
 
         self.script_file = ''
         self.est_dir = est_home
-        self.report = self.clients.KBaseReport
-        self.wsclient = self.clients.Workspace
-        self.dfu = self.clients.DataFileUtil
+        self.wsclient = clients.Workspace
+        self.dfu = clients.DataFileUtil
         #We need to keep track of the workspace objects use or create
         self.input_objects = []
         self.output_objects = []
@@ -397,12 +396,11 @@ class KbEstGenerateJob(Core):
         super().__init__(ctx, config, clients_class)
 
         # shared_folder is defined in the Core App class. It is also unique, time-stamped.
-        self.job_interface = EstGenerateJob(config, self.shared_folder)
+        self.job_interface = EstGenerateJob(config, self.shared_folder, self.clients)
+        self.report = self.clients.KBaseReport
 
         #self.ws_url = config['workspace-url']
-        self.callback_url = config['callback_url']
-        self.dfu = DataFileUtil(self.callback_url)
-        self.report = self.clients.KBaseReport
+        #self.callback_url = config['callback_url']
 
     def validate_params(params):
         return self.job_interface.validate_params(params)
@@ -416,7 +414,7 @@ class KbEstGenerateJob(Core):
     def generate_report(self, params):
 
         reports_path = self.job_interface.get_reports_path()
-        template_variables = self.job_interface.generate_report()
+        template_variables = self.job_interface.generate_report(params)
 
         # The KBaseReport configuration dictionary
         config = dict(

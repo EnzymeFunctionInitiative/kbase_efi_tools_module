@@ -26,7 +26,7 @@ def get_streams(process):
 
 class EstAnalysisJob:
 
-    def __init__(self, config, shared_folder):
+    def __init__(self, config, shared_folder, clients):
         #TODO: make this a config variable
         est_home = '/apps/EST'
         db_conf = config.get('efi_db_config')
@@ -235,11 +235,9 @@ class KbEstAnalysisJob(Core):
         super().__init__(ctx, config, clients_class)
 
         # self.shared_folder is defined in the Core App class.
-        self.job_interface = EstAnalysisJob(config, self.shared_folder)
+        self.job_interface = EstAnalysisJob(config, self.shared_folder, self.clients)
         self.ws_url = config['workspace-url']
         self.callback_url = config['SDK_CALLBACK_URL']
-        self.dfu = DataFileUtil(self.callback_url)
-
 
     def validate_params(params):
         return EstAnalysisJob.validate_params(params)
@@ -253,7 +251,7 @@ class KbEstAnalysisJob(Core):
     def generate_report(self, params):
 
         reports_path = self.job_interface.get_reports_path()
-        template_variables = self.job_interface.generate_report()
+        template_variables = self.job_interface.generate_report(params)
 
         # The KBaseReport configuration dictionary
         config = dict(
