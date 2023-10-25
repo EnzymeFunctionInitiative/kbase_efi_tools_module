@@ -23,8 +23,10 @@ jobs:
       # Cleanup project
       - name: Cleanup
         run: |
-          bash scripts/rename.sh
-          rm .github/workflows/template-cleanup.yml
+          if [ -f "scripts/rename.sh" ]; then
+            bash scripts/rename.sh
+            rm .github/workflows/template-cleanup.yml
+          fi
 
       # Push changes
       - name: Push changes
