@@ -228,14 +228,6 @@ class EstGenerateJob:
         print('###############################################################################################################\n')
 
         kb_params["output_name"] = re.sub(r"[^a-z0-9_]+", "_", self.job_name, count=0, flags=re.IGNORECASE)
-        workspace = ""
-        if "workspace_id" in kb_params:
-            workspace = str(kb_params["workspace_id"])
-        elif "workspace_name" in kb_params:
-            workspace = kb_params["workspace_name"]
-        elif "workspace" in kb_params:
-            workspace = kb_params["workspace"]
-        kb_params["workspace"] = workspace
 
         #sequence_set = "TODO"
         #if not "sequenceset_ref" in kb_params:
@@ -379,11 +371,18 @@ class EstGenerateJob:
                 }]
             }
 
-            #Handling if the input workspace is an ID or name
-            if isinstance(kb_params["workspace"], int):
-                save_params["id"] = kb_params["workspace"]
-            elif isinstance(kb_params["workspace"], str):
-                save_params["workspace"] = kb_params["workspace"]
+            ##Handling if the input workspace is an ID or name
+            #if isinstance(kb_params["workspace"], int):
+            #    save_params["id"] = kb_params["workspace"]
+            ##elif isinstance(kb_params["workspace"], str):
+            #else:
+            #    save_params["workspace"] = kb_params["workspace"]
+            if "workspace_name" in kb_params:
+                workspace_name = kb_params["workspace_name"]
+            else:
+                workspace_name = str(kb_params["workspace_id"])
+            save_params["workspace"] = workspace_name
+            print("Saving files to workspace " + workspace_name)
 
             #Saving the object to the workspace  
             object_info = self.wsclient.save_objects(save_params)
