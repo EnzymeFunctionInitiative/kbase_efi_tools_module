@@ -18,3 +18,11 @@ class EfiUtils:
             else:
                 raise
 
+    def object_info_to_ref(object_info):
+        print(object_info)
+        if object_info == None or len(object_info) == 0:
+            return None
+        else:
+            object_info = object_info[0]
+            return f'{object_info[6]}/{object_info[0]}/{object_info[4]}'
+

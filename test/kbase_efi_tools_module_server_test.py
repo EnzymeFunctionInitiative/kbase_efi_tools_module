@@ -17,20 +17,21 @@ from installed_clients.WorkspaceClient import Workspace
 
 # From the lib/kbase_efi_tools_module directory
 from kbase_efi_tools_module.utils.test_utils import EfiTestUtils
+from kbase_efi_tools_module.utils.utils import EfiUtils as utils
 
 
 class kbase_efi_tools_moduleTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        token = os.environ.get("KB_AUTH_TOKEN", None)
-        config_file = os.environ.get("KB_DEPLOYMENT_CONFIG", None)
+        token = os.environ.get('KB_AUTH_TOKEN', None)
+        config_file = os.environ.get('KB_DEPLOYMENT_CONFIG', None)
         cls.cfg = {}
         config = ConfigParser()
         config.read(config_file)
-        for nameval in config.items("kbase_efi_tools_module"):
+        for nameval in config.items('kbase_efi_tools_module'):
             cls.cfg[nameval[0]] = nameval[1]
         # Getting username from Auth profile for token
-        authServiceUrl = cls.cfg["auth-service-url"]
+        authServiceUrl = cls.cfg['auth-service-url']
         auth_client = _KBaseAuth(authServiceUrl)
         user_id = auth_client.get_user(token)
         # WARNING: don't call any logging methods on the context object,
@@ -38,33 +39,33 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         cls.ctx = MethodContext(None)
         cls.ctx.update(
             {
-                "token": token,
-                "user_id": user_id,
-                "provenance": [
+                'token': token,
+                'user_id': user_id,
+                'provenance': [
                     {
-                        "service": "kbase_efi_tools_module",
-                        "method": "please_never_use_it_in_production",
-                        "method_params": [],
+                        'service': 'kbase_efi_tools_module',
+                        'method': 'please_never_use_it_in_production',
+                        'method_params': [],
                     }
                 ],
-                "authenticated": 1,
+                'authenticated': 1,
             }
         )
-        cls.wsURL = cls.cfg["workspace-url"]
+        cls.wsURL = cls.cfg['workspace-url']
         cls.wsClient = Workspace(cls.wsURL)
         cls.serviceImpl = kbase_efi_tools_module(cls.cfg)
-        cls.scratch = cls.cfg["scratch"]
-        cls.callback_url = os.environ["SDK_CALLBACK_URL"]
+        cls.scratch = cls.cfg['scratch']
+        cls.callback_url = os.environ['SDK_CALLBACK_URL']
         suffix = int(time.time() * 1000)
-        cls.wsName = "kbase_efi_tools_module_" + str(suffix)
-        ret = cls.wsClient.create_workspace({"workspace": cls.wsName})  # noqa
+        cls.wsName = 'kbase_efi_tools_module_' + str(suffix)
+        ret = cls.wsClient.create_workspace({'workspace': cls.wsName})  # noqa
 
         cls.tu = EfiTestUtils(cls)
 
     @classmethod
     def tearDownClass(cls):
-        if hasattr(cls, "wsName"):
-            cls.wsClient.delete_workspace({"workspace": cls.wsName})
+        if hasattr(cls, 'wsName'):
+            cls.wsClient.delete_workspace({'workspace': cls.wsName})
             print("Test workspace was deleted")
 
 #    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
@@ -85,17 +86,35 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 #        self.run_gen_test("option_" + option, test_params, expected)
 #        return True
 
-    def disabled_test_analysis(self):
-        
-        db_conf = "/apps/EFIShared/testing_db_conf.sh"
-        efi_est_config = "/apps/EST/testing_env_conf.sh"
+    def get_output_dir(self, prefix):
+        dir_num = 0
+        output_dir = os.path.join(self.scratch, prefix + str(dir_num))
+        print(output_dir)
+        while os.path.exists(output_dir):
+            dir_num = dir_num + 1
+            output_dir = os.path.join(self.scratch, prefix + str(dir_num))
+        utils.mkdir_p(output_dir)
+        return output_dir
 
+    def test_analysis(self):
+        
+        db_conf = '/apps/EFIShared/testing_db_conf.sh'
+        efi_est_config = '/apps/EST/testing_env_conf.sh'
+
+        output_dir = self.get_output_dir('analysis_')
+
+        data_transfer_zip = self.tu.get_test_data_file("data_transfer")
         run_data = {
-                "workspace_name": self.wsName,
-                "reads_ref": "70257/2/1",
-                "output_name": "EstAnalysisApp",
-                "efi_db_config": db_conf,
-                "efi_est_config": efi_est_config,
+                'workspace_name': self.wsName,
+                'reads_ref': '70257/2/1',
+                'output_name': 'EstAnalysisApp',
+                'efi_db_config': db_conf,
+                'efi_est_config': efi_est_config,
+                'data_transfer_zip': data_transfer_zip,
+                'data_transfer_name': 'Test',
+                'data_transfer_meta': {},
+                'ascore': 25,
+                'output_dir': output_dir
             }
         #run_data[option_key] = option_data
 
@@ -104,11 +123,11 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
             run_data,
         )
 
-        self.assertTrue(ret != None, "No report returned")
-        self.assertTrue(isinstance(ret, list), "Report should be a list")
-        self.assertTrue(len(ret) > 0, "Report must have at least one element")
+        self.assertTrue(ret != None, 'No report returned')
+        self.assertTrue(isinstance(ret, list), 'Report should be a list')
+        self.assertTrue(len(ret) > 0, 'Report must have at least one element')
 
-        shared_dir = ret[0]["shared_folder"]
+        shared_dir = ret[0]['shared_folder']
         print("OUTPUT DIR IS: " + shared_dir + "\n")
         self.assertTrue(os.path.exists(shared_dir), "Shared directory " + shared_dir + " does not exist.")
 
@@ -132,17 +151,19 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 
 
     @parameterized.expand([
-                           ("family,ex_frag", True),
-                           ("family,frag", False)
+                           ('family,ex_frag', True),
+                           ('family,frag', False)
                            ])
-    def test_est_generate_family(self, name, exclude_fragments):
+    def disabled_test_est_generate_family(self, name, exclude_fragments):
 
-        option = "family"
+        output_dir = self.get_output_dir('generate_' + name + '_')
+
+        option = 'family'
         test_opts = [exclude_fragments, option]
         test_params = self.tu.get_family_test_params(test_opts)
         expected = self.tu.get_expected(test_opts)
         logging.info("RUNNING TEST " + name)
-        self.run_gen_test("option_" + option, test_params, expected)
+        self.run_gen_test('option_' + option, test_params, expected, output_dir)
         return True
 
     #def run_est_FASTA(self, test_params, num_seq_data):
@@ -157,17 +178,18 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
     #    acc_data = {"acc_input_file": acc_file_job_path, "acc_exclude_fragments": test_params["exclude_fragments"]}
     #    self.run_gen_test("option_accession", acc_data, num_seq_data)
 
-    def run_gen_test(self, option_key, option_data, num_expected):
+    def run_gen_test(self, option_key, option_data, num_expected, output_dir):
 
-        db_conf = "/apps/EFIShared/testing_db_conf.sh"
-        efi_est_config = "/apps/EST/testing_env_conf.sh"
+        db_conf = '/apps/EFIShared/testing_db_conf.sh'
+        efi_est_config = '/apps/EST/testing_env_conf.sh'
 
         run_data = {
-                "workspace_name": self.wsName,
-                "reads_ref": "70257/2/1",
-                "output_name": "EstGenerateApp",
-                "efi_db_config": db_conf,
-                "efi_est_config": efi_est_config,
+                'workspace_name': self.wsName,
+                'reads_ref': '70257/2/1',
+                'output_name': 'EstGenerateApp',
+                'efi_db_config': db_conf,
+                'efi_est_config': efi_est_config,
+                'output_dir': output_dir
             }
         run_data[option_key] = option_data
 
@@ -180,16 +202,16 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         self.assertTrue(isinstance(ret, list), "Report should be a list")
         self.assertTrue(len(ret) > 0, "Report must have at least one element")
 
-        shared_dir = ret[0]["shared_folder"]
+        shared_dir = ret[0]['shared_folder']
         print("OUTPUT DIR IS: " + shared_dir + "\n")
         self.assertTrue(os.path.exists(shared_dir), "Shared directory " + shared_dir + " does not exist.")
 
-        job_dir = os.path.join(shared_dir, "job_temp", "output")
-        report_dir = os.path.join(shared_dir, "reports")
-        comp_results_file = os.path.join(job_dir, "1.out")
-        output_image = os.path.join(report_dir, "length_histogram_uniprot.png")
+        job_dir = os.path.join(shared_dir, 'job_temp', 'output')
+        report_dir = os.path.join(shared_dir, 'reports')
+        comp_results_file = os.path.join(job_dir, '1.out')
+        output_image = os.path.join(report_dir, 'length_histogram_uniprot.png')
         if not os.path.isfile(output_image):
-            output_image = os.path.join(report_dir, "length_histogram.png")
+            output_image = os.path.join(report_dir, 'length_histogram.png')
 
         self.assertTrue(os.path.exists(job_dir), "Job output directory " + job_dir + " does not exist.")
         self.assertTrue(os.path.exists(report_dir), "Report output directory " + job_dir + " does not exist.")

@@ -60,11 +60,13 @@ class EfiTestUtils:
         if data_dir == None: return None
 
         if file_type == "fasta":
-            file_path = data_dir + "/PF05544_sp.fasta"
+            file_path = os.path.join(data_dir, "PF05544_sp.fasta")
         elif file_type == "accession":
-            file_path = data_dir + "/PF05544_sp.id_list.txt"
+            file_path = os.path.join(data_dir, "PF05544_sp.id_list.txt")
         elif file_type == "blast":
-            file_path = data_dir + "/blast_seq.fa"
+            file_path = os.path.join(data_dir, "blast_seq.fa")
+        elif file_type == "data_transfer":
+            file_path = os.path.join(data_dir, "data_transfer.zip")
         else:
             return None
 
@@ -80,6 +82,7 @@ class EfiTestUtils:
         data_path = None
         with open(conf_file, "r") as fh:
             line = fh.readline()
+            print(line)
             while line and not data_path:
                 rx = re.search("^export EFI_DB=(.+)/[^/]+$", line)
                 if rx != None:

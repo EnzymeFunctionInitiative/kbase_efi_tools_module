@@ -16,6 +16,7 @@ module kbase_efi_tools_module {
         string description;
     } File;
 
+/*
     typedef structure {
         string workspace_name;
         int workspace_id;
@@ -25,23 +26,9 @@ module kbase_efi_tools_module {
         mapping<string, UnspecifiedObject> option_fasta;
         mapping<string, UnspecifiedObject> option_accession;
     } EfiEstAppParams;
+*/
 
-    /*
-     * The output of the first step in creating an SSN (i.e. "generate").
-     * Contains a File and a job label. Also serves as input to the
-     * Analysis module.
-     * Returned data:
-     *     File gen_file - A File object (can be defined multiple ways)
-     *     string label - Label of job name
-     */
-    typedef structure {
-        File gen_file;
-        string label;
-    } GenerateResults;
-
-
-    /*mapping<string,UnspecifiedObject> params*/
     funcdef run_est_generate_app(mapping<string,UnspecifiedObject> params) returns (ReportResults output) authentication required;
 
-    funcdef run_est_analysis_app(GenerateResults results) returns (ReportResults output) authentication required;
+    funcdef run_est_analysis_app(mapping<string,UnspecifiedObject> params) returns (ReportResults output) authentication required;
 };

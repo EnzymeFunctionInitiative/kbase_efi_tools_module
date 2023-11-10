@@ -35,9 +35,9 @@ class kbase_efi_tools_module:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.1"
-    GIT_URL = "https://github.com/nilsoberg2@EnzymeFunctionInitiative/kbase_efi_tools_module.git"
-    GIT_COMMIT_HASH = "2a282d55578c53b51df8fd7c9868cfa6d8eb475c"
+    VERSION = "0.0.5"
+    GIT_URL = "https://github.com/EnzymeFunctionInitiative/kbase_efi_tools_module.git"
+    GIT_COMMIT_HASH = "2554958b45def35d796f467e015068beffb4e6b1"
 
     #BEGIN_CLASS_HEADER
     #END_CLASS_HEADER
@@ -62,7 +62,15 @@ class kbase_efi_tools_module:
 
     def run_est_generate_app(self, ctx, params):
         """
-        mapping<string,UnspecifiedObject> params
+        typedef structure {
+        string workspace_name;
+        int workspace_id;
+        string job_name;
+        mapping<string, UnspecifiedObject> option_blast;
+        mapping<string, UnspecifiedObject> option_family;
+        mapping<string, UnspecifiedObject> option_fasta;
+        mapping<string, UnspecifiedObject> option_accession;
+        } EfiEstAppParams;
         :param params: instance of mapping from String to unspecified object
         :returns: instance of type "ReportResults" -> structure: parameter
            "report_name" of String, parameter "report_ref" of String
@@ -73,13 +81,14 @@ class kbase_efi_tools_module:
 
         is_valid = EstGenerateJob.validate_params(params)
 
+        shared_folder = params.get('output_dir', self.shared_folder)
         config = dict(
-            callback_url=self.callback_url,
-            shared_folder=self.shared_folder,
-            clients=dict(
-                KBaseReport=KBaseReport(self.callback_url,token=self.token),
-                DataFileUtil=DataFileUtil(self.callback_url,token=self.token),
-                Workspace=Workspace(self.config["workspace-url"], token=self.token)
+            callback_url = self.callback_url,
+            shared_folder = shared_folder,
+            clients = dict(
+                KBaseReport = KBaseReport(self.callback_url, token = self.token),
+                DataFileUtil = DataFileUtil(self.callback_url, token = self.token),
+                Workspace = Workspace(self.config["workspace-url"], token=self.token)
             ),
         )
 
@@ -94,7 +103,7 @@ class kbase_efi_tools_module:
 
         job.create_job(params)
 
-        job.start_job()
+        job.start_job(params)
 
         output = job.generate_report(params)
 
@@ -107,17 +116,9 @@ class kbase_efi_tools_module:
         # return the results
         return [output]
 
-    def run_est_analysis_app(self, ctx, results):
+    def run_est_analysis_app(self, ctx, params):
         """
-        :param results: instance of type "GenerateResults" (* The output of
-           the first step in creating an SSN (i.e. "generate"). * Contains a
-           File and a job label. Also serves as input to the * Analysis
-           module. * Returned data: *     File gen_file - A File object (can
-           be defined multiple ways) *     string label - Label of job name)
-           -> structure: parameter "gen_file" of type "File" -> structure:
-           parameter "path" of String, parameter "shock_id" of String,
-           parameter "name" of String, parameter "label" of String, parameter
-           "description" of String, parameter "label" of String
+        :param params: instance of mapping from String to unspecified object
         :returns: instance of type "ReportResults" -> structure: parameter
            "report_name" of String, parameter "report_ref" of String
         """
@@ -127,11 +128,14 @@ class kbase_efi_tools_module:
 
         #is_valid = EstAnalysisJob.validate_params(params)
 
+        shared_folder = params.get('output_dir', self.shared_folder)
         config = dict(
-            callback_url=self.callback_url,
-            shared_folder=self.shared_folder,
-            clients=dict(
-                KBaseReport=KBaseReport,
+            callback_url = self.callback_url,
+            shared_folder = shared_folder,
+            clients = dict(
+                KBaseReport = KBaseReport,
+                DataFileUtil = DataFileUtil(self.callback_url, token = self.token),
+                Workspace = Workspace(self.config["workspace-url"], token = self.token)
             ),
         )
 
@@ -141,12 +145,18 @@ class kbase_efi_tools_module:
         est_conf = params.get('efi_est_config')
         if est_conf != None:
             config['efi_est_config'] = est_conf
+        if params.get('similarity_ref') == None and params.get('data_transfer_zip') == None:
+            raise ValueError('Unable to run EST analysis app: must provide similarity_ref')
 
         job = KbEstAnalysisJob(ctx, config)
 
-        job.create_job(params)
+        status = job.create_job(params)
+        if not status:
+            raise ValueError('Unable to create EST analysis app job')
 
-        job.start_job()
+        status = job.start_job()
+        if not status:
+            raise ValueError('Unable to run EST analysis app job')
 
         output = job.generate_report(params)
 
@@ -158,7 +168,6 @@ class kbase_efi_tools_module:
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

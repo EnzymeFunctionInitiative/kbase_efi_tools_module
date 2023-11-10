@@ -6,14 +6,17 @@ import subprocess
 import uuid
 import json
 import shutil
+import collections.abc
+import re
+from pathlib import Path
 
 # This is the SFA base package which provides the Core app class.
 from base import Core
 from installed_clients.DataFileUtilClient import DataFileUtil
 from ..utils.utils import EfiUtils as utils
 
-MODULE_DIR = "/kb/module"
-TEMPLATES_DIR = os.path.join(MODULE_DIR, "lib/templates")
+MODULE_DIR = '/kb/module'
+TEMPLATES_DIR = os.path.join(MODULE_DIR, 'lib/templates')
 
 
 def get_streams(process):
@@ -21,7 +24,7 @@ def get_streams(process):
     Returns decoded stdout,stderr after loading the entire thing into memory
     """
     stdout, stderr = process.communicate()
-    return (stdout.decode("utf-8", "ignore"), stderr.decode("utf-8", "ignore"))
+    return (stdout.decode('utf-8', 'ignore'), stderr.decode('utf-8', 'ignore'))
 
 
 class EstAnalysisJob:
@@ -41,21 +44,26 @@ class EstAnalysisJob:
         else:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
-        #TODO:
-        self.input_dataset_zip = config.get('input_dataset_zip')
-
         self.shared_folder = shared_folder
         self.output_dir = os.path.join(shared_folder, 'job_temp')
         utils.mkdir_p(self.output_dir)
+
+        self.wsclient = clients.Workspace
+        self.dfu = clients.DataFileUtil
 
         self.script_file = ''
         self.est_dir = est_home
         self.est_env = [self.efi_est_config, '/apps/EFIShared/env_conf.sh', '/apps/env.sh', '/apps/blast_legacy.sh', self.efi_db_config]
 
+
     def create_job(self, params):
 
-        if self.input_dataset_zip == None:
-            return None
+        input_dataset = self.get_input_dataset(params)
+        if input_dataset == None:
+            raise ValueError('Unable to find input dataset from params ' + str(params))
+        input_name = input_dataset[0]
+        input_data = input_dataset[1]
+        input_dataset_zip = input_dataset[2]
 
         create_job_pl = os.path.join(self.est_dir, 'create_job.pl')
 
@@ -65,14 +73,14 @@ class EstAnalysisJob:
             process_args.extend(['--job-id', params['job_id']])
 
         if params.get('ascore') == None:
-            return None
+            raise ValueError('Ascore parameter is necessary in order to create EST analysis job')
 
         print(params)
 
         process_params = {'type': 'analysis'}
         process_params['a_job_dir'] = self.output_dir
-        process_params['zip_transfer'] = self.input_dataset_zip
-        process_params['filter'] = params.get('filter', "eval")
+        process_params['zip_transfer'] = input_dataset_zip
+        process_params['filter'] = params.get('filter', 'eval')
         process_params['minval'] = params.get('ascore')
         if params.get('minlen') != None:
             process_params['minlen'] = params['min_len']
@@ -95,11 +103,16 @@ class EstAnalysisJob:
             stderr=subprocess.PIPE,
         )
 
+        #junk = Path(self.efi_est_config).read_text()
+        #print(junk)
+        #junk = Path(self.efi_db_config).read_text()
+        #print(junk)
+
         stdout, stderr = get_streams(process)
         if stdout != None:
             script_file = stdout.strip()
         else:
-            return None
+            raise ValueError('Unable to create EST analysis job: unable to obtain output streams')
 
         print("### OUTPUT FROM CREATE JOB ####################################################################################\n")
         print(str(stdout) + "\n---------\n")
@@ -108,58 +121,12 @@ class EstAnalysisJob:
 
         self.script_file = script_file
 
-        return script_file
+        return True
 
-    def get_blast_params(self, params, process_params):
-        if params.get('option_blast') != None:
-            process_params['type'] = 'blast'
-            process_params['seq'] = params['option_blast']['blast_sequence']
-            if params['option_blast'].get('blast_exclude_fragments') and params['option_blast']['blast_exclude_fragments'] == 1:
-                process_params['exclude_fragments'] = 1
-    def get_family_params(self, params, process_params):
-        if params.get('option_family') != None:
-            process_params['type'] = 'family'
-            process_params['family'] = params['option_family']['fam_family_name']
-            process_params['uniref'] = params['option_family']['fam_use_uniref']
-            if params['option_family'].get('fam_exclude_fragments') and params['option_family']['fam_exclude_fragments'] == 1:
-                process_params['exclude_fragments'] = 1
-    def get_fasta_params(self, params, process_params):
-        if params.get('option_fasta') != None:
-            process_params['type'] = 'fasta'
-            fasta_file_path = None
-            if params['option_fasta'].get('fasta_file') == None and params['option_fasta'].get('fasta_seq_input_text') != None:
-                #TODO: write text to a file
-                fasta_file_path = ''
-            elif params['option_fasta'].get('fasta_file') == None:
-                print("Error")#TODO: make an error here
-
-            process_params['fasta_file'] = fasta_file_path
-            if params['option_fasta'].get('fasta_exclude_fragments') and params['option_fasta']['fasta_exclude_fragments'] == 1:
-                process_params['exclude_fragments'] = 1
-    def get_accession_params(self, params, process_params):
-        if params.get('option_accession') != None:
-            process_params['type'] = 'acc'
-            id_list_file = None
-            if params['option_accession'].get('acc_input_file') == None and params['option_accession'].get('acc_input_list') != None:
-                id_list = params['option_accession'].get('acc_input_list')
-                #TODO: write this to a file
-                id_list_file = ''
-            elif params['option_accession'].get('acc_input_file') == None and params['option_accession'].get('acc_input_text') != None:
-                acc_id_text = params['option_accession']['acc_input_text']
-                #TODO: write this to a file
-                id_list_file = ''
-            elif params['option_accession'].get('acc_input_file') == None:
-                print("Error")
-                #TODO: make an error here
-
-            process_params['id_list_file'] = id_list_file
-            if params['option_accession'].get('acc_exclude_fragments') and params['option_accession']['acc_exclude_fragments'] == 1:
-                process_params['exclude_fragments'] = 1
 
     def start_job(self):
         if not os.path.exists(self.script_file):
-            #TODO: throw error
-            return False
+            raise ValueError('Unable to run EST analysis job: the script does not exist')
 
         start_job_pl = os.path.join('/bin/bash')
 
@@ -171,16 +138,62 @@ class EstAnalysisJob:
         )
 
         stdout, stderr = get_streams(process)
+        if stdout == None:
+            raise ValueError('Unable to run EST analysis job: unable to obtain output streams')
 
         print("### OUTPUT FROM GENERATE ######################################################################################\n")
-        print(str(stdout) + "\n---------\n")
+        #print(str(stdout) + "\n---------\n")
         print("### ERR\n")
         print(str(stderr) + "\n\n\n\n")
 
+        ssn_ref = self.save_output()
+
+        if ssn_ref != None:
+            return True
+        else:
+            raise ValueError('Unable to run EST analysis job: unable to save output')
+
+
+    def get_input_dataset(self, params):
+        # Direct input, do not get from KBase shock API
+        if params.get('data_transfer_zip'):
+            data_transfer_zip = params['data_transfer_zip']
+            data = params.get('data_transfer_meta', {})
+            input_name = params.get('data_transfer_name', 'Direct')
+            return input_name, data, data_transfer_zip
+
+        objects = self.wsclient.get_objects2({'objects': [{'ref': params['similarity_ref']}]})
+        if not isinstance(objects, dict) or len(objects) == 0:
+            return None
+
+        objects = objects['data']
+        if len(objects) == 0:
+            return None
+        the_object = objects[0]
+        data = the_object['data']
+        if the_object.get('type') == None:
+            return None
+        type_name = the_object['type']
+
+        if type_name != 'ComputedProteinSims':
+            return None
+
+        data_transfer_zip = os.path.join(self.output_dir, 'data_transfer.zip')
+
+        gen_file_hid = data['gen_file']
+        self.dfu.file_to_shock({'handle_id': gen_file_hid, 'file_path': data_transfer_zip, 'unpack': 'unpack'})
+
+        return input_name, data, data_transfer_zip
+
+
+    def save_output(self):
+        #TODO
+        aaa = 1
         return True
 
+
     def get_reports_path(self):
-        reports_path = os.path.join(self.shared_folder, "reports")
+        reports_path = os.path.join(self.shared_folder, 'reports')
         return reports_path
 
     def generate_report(self, params):
@@ -191,41 +204,76 @@ class EstAnalysisJob:
         # This path is required to properly use the template.
         reports_path = self.get_reports_path()
         utils.mkdir_p(reports_path)
+        #output_dir = os.path.join(self.output_dir, 'output')
+        output_dir = self.output_dir
 
-        length_histogram = "length_histogram_uniprot.png"
-        alignment_length = "alignment_length.png"
-        percent_identity = "percent_identity.png"
+        print(os.listdir(output_dir))
 
-        length_histogram_src = os.path.join(self.output_dir, "output", length_histogram)
-        alignment_length_src = os.path.join(self.output_dir, "output", alignment_length)
-        percent_identity_src = os.path.join(self.output_dir, "output", percent_identity)
+        ssn_data = self.load_stats_file(output_dir)
+        if ssn_data.get('full_ssn_file') == None:
+            raise ValueError('Unable to parse stats file')
 
-        length_histogram_out = os.path.join(reports_path, length_histogram)
-        alignment_length_out = os.path.join(reports_path, alignment_length)
-        percent_identity_out = os.path.join(reports_path, percent_identity)
+        ssn_file             = 'ssn.zip'
+        ssn_file_out         = os.path.join(reports_path, ssn_file)
+        ssn_file_src         = os.path.join(output_dir, ssn_data['full_ssn_file'])
+        ssn_file_rel         = ssn_file
 
-        #length_histogram_rel = os.path.join("reports", length_histogram)
-        #alignment_length_rel = os.path.join("reports", alignment_length)
-        #percent_identity_rel = os.path.join("reports", percent_identity)
-        length_histogram_rel = length_histogram
-        alignment_length_rel = alignment_length
-        percent_identity_rel = percent_identity
+        #TODO: add the images into the EFI code.
+        # Actually, we probably don't want to do this.
+        #length_histogram     = 'length_histogram_uniprot.png'
+        #length_histogram_src = os.path.join(output_dir, length_histogram)
+        #length_histogram_out = os.path.join(reports_path, length_histogram)
+        #length_histogram_rel = length_histogram
+        #alignment_length     = 'alignment_length.png'
+        #alignment_length_out = os.path.join(reports_path, alignment_length)
+        #alignment_length_src = os.path.join(output_dir, alignment_length)
+        #alignment_length_rel = alignment_length
+        #percent_identity     = 'percent_identity.png'
+        #percent_identity_out = os.path.join(reports_path, percent_identity)
+        #percent_identity_src = os.path.join(output_dir, percent_identity)
+        #percent_identity_rel = percent_identity
 
-        print(os.listdir(self.output_dir + "/output"))
-        print(length_histogram_src + " --> " + length_histogram_out)
+        #shutil.copyfile(length_histogram_src, length_histogram_out)
+        #shutil.copyfile(alignment_length_src, alignment_length_out)
+        #shutil.copyfile(percent_identity_src, percent_identity_out)
+        shutil.copyfile(ssn_file_src, ssn_file_out)
 
-        shutil.copyfile(length_histogram_src, length_histogram_out)
-        shutil.copyfile(alignment_length_src, alignment_length_out)
-        shutil.copyfile(percent_identity_src, percent_identity_out)
+        generate_summary = []
+        analysis_summary = []
 
-        template_variables = {
-                'length_histogram_file': length_histogram_rel,
-                'alignment_length_file': alignment_length_rel,
-                'percent_identity_file': percent_identity_rel,
-                }
+        template_variables = ssn_data
+        template_variables['generate_summary'] = generate_summary
+        template_variables['analysis_summary'] = analysis_summary
+
+        #template_variables['length_histogram_file'] = length_histogram_rel
+        #template_variables['alignment_length_file'] = alignment_length_rel
+        #template_variables['percent_identity_file'] = percent_identity_rel
 
         return template_variables
 
+    def load_stats_file(self, output_dir):
+        stats_file = os.path.join(output_dir, "stats.tab")
+        repnode_ssns = []
+        data = {}
+        if os.path.isfile(stats_file):
+            with open(stats_file) as fh:
+                line = fh.readline() #header
+                line = fh.readline()
+                while line:
+                    parts = re.split(r"\t", line)
+                    mx = re.search(r"full_ssn", parts[0])
+                    if mx != None and data.get('full_ssn_file') == None:
+                        data['full_ssn_file'] = parts[0] + '.zip'
+                        data['full_num_nodes'] = parts[1]
+                        data['full_num_edges'] = parts[2]
+                    else:
+                        mx = re.search(r"repnode-([0-9\.]+)_ssn", line)
+                        if mx != None:
+                            rep_id = float(mx.group(1)) * 100
+                            repnode_ssns.append([parts[0] + '.zip', rep_id, parts[1], parts[2]])
+                    line = fh.readline()
+        data['repnode_ssns'] = repnode_ssns
+        return data
 
 
 
@@ -236,8 +284,7 @@ class KbEstAnalysisJob(Core):
 
         # self.shared_folder is defined in the Core App class.
         self.job_interface = EstAnalysisJob(config, self.shared_folder, self.clients)
-        self.ws_url = config['workspace-url']
-        self.callback_url = config['SDK_CALLBACK_URL']
+        self.report = self.clients.KBaseReport
 
     def validate_params(params):
         return EstAnalysisJob.validate_params(params)
@@ -258,15 +305,15 @@ class KbEstAnalysisJob(Core):
             report_name = f"EfiFamilyApp_{str(uuid.uuid4())}",
             reports_path = reports_path,
             template_variables = template_variables,
-            workspace_name = params["workspace_name"],
+            workspace_name = params['workspace_name'],
         )
         
         # Path to the Jinja template. The template can be adjusted to change
         # the report.
-        template_path = os.path.join(TEMPLATES_DIR, "report.html")
+        template_path = os.path.join(TEMPLATES_DIR, 'est_analysis_report.html')
 
         output_report = self.create_report_from_template(template_path, config)
-        output_report["shared_folder"] = self.shared_folder
+        output_report['shared_folder'] = self.shared_folder
         print("OUTPUT REPORT\n")
         print(str(output_report) + "\n")
         return output_report

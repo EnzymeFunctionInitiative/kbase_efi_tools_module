@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="generator" content="HTML Tidy for HTML5 for Linux version 5.8.0">
+    <style>
+    {% raw %}
+    /*! CSS Used from: https://efi.igb.illinois.edu/vendor/components/jqueryui/themes/base/jquery-ui.min.css */
+    .ui-helper-reset{margin:0;padding:0;border:0;outline:0;line-height:1.3;text-decoration:none;font-size:100%;list-style:none;}
+    .ui-helper-clearfix:before,.ui-helper-clearfix:after{content:"";display:table;border-collapse:collapse;}
+    .ui-helper-clearfix:after{clear:both;}
+    .ui-icon{display:inline-block;vertical-align:middle;margin-top:-.25em;position:relative;text-indent:-99999px;overflow:hidden;background-repeat:no-repeat;}
+    .ui-accordion .ui-accordion-header{display:block;cursor:pointer;position:relative;margin:2px 0 0 0;padding:.5em .5em .5em .7em;font-size:100%;}
+    .ui-accordion .ui-accordion-content{padding:1em 2.2em;border-top:0;overflow:auto;}
+    .ui-tabs{position:relative;padding:.2em;}
+    .ui-tabs .ui-tabs-nav{margin:0;padding:.2em .2em 0;}
+    .ui-tabs .ui-tabs-nav li{list-style:none;float:left;position:relative;top:0;margin:1px .2em 0 0;border-bottom-width:0;padding:0;white-space:nowrap;}
+    .ui-tabs .ui-tabs-nav .ui-tabs-anchor{float:left;padding:.5em 1em;text-decoration:none;}
+    .ui-tabs .ui-tabs-nav li.ui-tabs-active{margin-bottom:-1px;padding-bottom:1px;}
+    .ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor{cursor:text;}
+    .ui-tabs .ui-tabs-panel{display:block;border-width:0;padding:1em 1.4em;background:none;}
+    .ui-widget{font-family:Arial,Helvetica,sans-serif;font-size:1em;}
+    .ui-widget .ui-widget{font-size:1em;}
+    .ui-widget input,.ui-widget button{font-family:Arial,Helvetica,sans-serif;font-size:1em;}
+    .ui-widget.ui-widget-content{border:1px solid #c5c5c5;}
+    .ui-widget-content{border:1px solid #ddd;background:#fff;color:#333;}
+    .ui-widget-content a{color:#333;}
+    .ui-widget-header{border:1px solid #ddd;background:#e9e9e9;color:#333;font-weight:bold;}
+    .ui-widget-header a{color:#333;}
+    .ui-state-default,.ui-widget-content .ui-state-default,.ui-widget-header .ui-state-default{border:1px solid #c5c5c5;background:#f6f6f6;font-weight:normal;color:#454545;}
+    .ui-state-default a,.ui-state-default a:link,.ui-state-default a:visited{color:#454545;text-decoration:none;}
+    .ui-state-active,.ui-widget-content .ui-state-active,.ui-widget-header .ui-state-active{border:1px solid #003eff;background:#007fff;font-weight:normal;color:#fff;}
+    .ui-state-active a,.ui-state-active a:link,.ui-state-active a:visited{color:#fff;text-decoration:none;}
+    .ui-icon{width:16px;height:16px;}
+    .ui-icon,.ui-widget-content .ui-icon{background-image:url("https://efi.igb.illinois.edu/vendor/components/jqueryui/themes/base/images/ui-icons_444444_256x240.png");}
+    .ui-state-active .ui-icon{background-image:url("https://efi.igb.illinois.edu/vendor/componeryui/themes/base/images/ui-icons_ffffff_256x240.png");}
+    .ui-icon-triangle-1-e{background-position:-32px -16px;}
+    .ui-icon-triangle-1-s{background-position:-65px -16px;}
+    .ui-icon-alert{background-position:0 -144px;}
+    .ui-corner-all,.ui-corner-top{border-top-left-radius:3px;}
+    .ui-corner-all,.ui-corner-top{border-top-right-radius:3px;}
+    .ui-corner-all,.ui-corner-bottom{border-bottom-left-radius:3px;}
+    .ui-corner-all,.ui-corner-bottom{border-bottom-right-radius:3px;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/css/buttons.css?v=3 */
+    button{ze:16px;font-family:Arial;font-weight:normal;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;padding:10px 10%;text-decoration:none;display:inline-block;margin-top:6px;margin-bottom:15px;}
+    button.normal{border:1px solid #bbb;background-color:#ddd;display:inline-block;padding:6px 12px;margin-top:5px;margin-bottom:5px;border-radius:0px;}
+    a button:active{position:relative;top:1px;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/css/global.css?v=15 */
+    a{color:#0c4377;}
+    h3{font-size:145%;font-weight:bold;margin:20px 0px 3px 0px;}
+    h5{font-size:105%;font-weight:bold;margin:10px 0px;}
+    a{text-decoration:none;font-weight:bold;}
+    li:nth-last-child(2){border-right:none;}
+    a.question{display:inline-block;text-shadow:1px 1px 0px #ffffff;background-color:#ededed;border-radius:42px;border:1px solid #666;padding:0px 6px;margin-left:6px;font-size:60%;}
+    .file_download{border:1px solid #bbb;background-color:#ddd;display:inline-block;padding:6px 12px;margin-top:5px;margin-bottom:5px;cursor:pointer;border-radius:0;}
+    .file_download img{height:14px;}
+    .progress-loader{position:fixed;top:50%;left:50%;background-color:white;padding:30px;transform:translate(-50%,-50%);text-align:center;box-shadow:0 30px 40px rgba(0,0,0,.5);}
+    .progress-loader i{font-size:4em;}
+    .progress-loader-sm{font-size:2em;}
+    hr.light{border:0;border-top:1px solid #ccc;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/css/table.css?v=5 */
+    table.pretty{border-collapse:collapse;margin-bottom:20px;border-top:1px solid #aaa;border-bottom:1px solid #aaa;border-right:1px solid #aaa;width:100%;}
+    table.pretty td{border-left:1px solid #aaa;margin:0;padding:7px;}
+    table.pretty tr:nth-of-type(even) td{background-color:#eee;}
+    table.no-stretch tr td:first-child{width:1%;white-space:nowrap;}
+    td{overflow-wrap:break-word;padding:10px;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/css/jquery-custom.css?v=2 */
+    .ui-accordion .ui-accordion-header{font-weight:bold;}
+    .option-panels .ui-state-active{background:#4c4c4c;color:#eee;}
+    .ui-widget-content a{font-weight:bold;}
+    .tabs-efihdr{padding:0px;background:none;border-width:0px;}
+    .tabs-efihdr .ui-tabs-nav{padding-left:7px;background:transparent;border-width:0px 0px 0px 0px;-moz-border-radius:0px;-webkit-border-radius:0px;border-radius:0px;}
+    .tabs-efihdr .ui-tabs-panel{-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;box-shadow:-1px 1px 1px rgba(0,0,0,0.15);background:#fff;border:1px solid darkgray;}
+    .tabs-efihdr .ui-tabs-nav .ui-state-default a{color:#4c4c4c;}
+    .tabs-efihdr .ui-tabs-nav .ui-state-active a{color:#4c4c4c;}
+    .tabs-efihdr .ui-tabs-nav .ui-state-active{background-color:#8ABFFF;border:1px solid #aaa;}
+    .tabs-efihdr.ui-widget-content{border:0;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/vendor/fortawesome/font-awesome/css/all.min.css */
+    .fassx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;}
+    .fa-spin{-webkit-animation:fa-spin 2s linear infinite;animation:fa-spin 2s linear infinite;}
+    .fa-spinner:before{content:"\f110";}
+    .fas{font-family:"Font Awesome 5 Free";}
+    .fas{font-weight:900;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/vendor/efiillinois/sunburst/web/css/sunburst.css?v=42 */
+    .clusterize:0.9em;}
+    .cluster-size{text-transform:uppercase;}
+    .form-check-inline{dinline-flex;align-items:center;padding-left:0;margin-right:0.75rem;}
+    .form-check{position:relative;}
+    .sunbel{color:black;padding:3px 15px;margin-bottom:1px;width:100px;}
+    /*! CSS Used from: https://efi.igb.illinois.edu/efi-est/css/est.css?v=42 */
+    a,.ui-widget-content a{color:#7a0026;}
+    .stepc-graphs div.ui-helper-reset{line-height:inherit;}
+    /*! CSS Used from: Embedded */
+    .sunburst-viz .slice path{cursor:pointer;}
+    .sunburst-viz text{font-family:sans-serif;font-size:12px;dominant-baseline:middle;text-anchor:middle;pointer-events:none;fill:#222;}
+    .sunburst-viz .text-contour{fill:none;stroke:white;stroke-width:5;stroke-linejoin:'round';}
+    t-viz .main-arc{stroke-width:1px;transition:opacity .4s;}
+    .sunburst-viz .main-arc:hover{opacity:0.85;transition:opacity .05s;}
+    .sunburst-viz .hidden-arc{fill:none;}
+    .sunburst-viz{position:relative;}
+    .sunburst-tooltip{display:none;position:absolute;max-width:320px;white-space:normal;padding:5px;border-radius:3px;font:12px sans-serif;color:#eee;background:rgba(0,0,0,0.65);pointer-events:none;}
+    /*! CSS Used keyframes */
+    @-webkit-keyframes fa-spin{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg);}to{-webkit-transform:rotate(1turn);transform:rotate(1turn);}}
+    @keyframes fa-spin{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg);}to{-webkit-transform:rotate(1turn);transform:rotate(1turn);}}
+	.fieldsetContainer {height:0;overflow:hidden;}
+	#toggle {display:none;}
+	#toggle:checked ~ .fieldsetContainer {height:50px;}
+    label .arrow-dn {font-weight:bold;display:inline-block;}
+    label .arrow-up {font-weight:bold;display:none;}
+    #toggle:checked ~ label .arrow-dn {display:none;}
+    #toggle:checked ~ label .arrow-up {display:inline-block;}
+    {% endraw %}
+    </style>
+    <title></title>
+</head>
+<body>
+    <div class="tabs-efihdr tabs ui-tabs ui-corner-all ui-widget ui-widget-content">
+        <ul class="ui-tabs-nav ui-corner-all ui-helper-reset ui-helper-clearfix ui-widget-header" role="tablist">
+            <li class="ui-tabs-active ui-tabs-tab ui-corner-top ui-state-default ui-tab ui-state-active" role="tab" tabindex="0" aria-controls="info" aria-labelledby="ui-id-1" aria-selected="true" aria-expanded="true">
+                <a href="#info" role="presentation" tabindex="-1" class="ui-tabs-anchor" id="ui-id-1">SSN Overview</a>
+            </li>
+            <li role="tab" tabindex="-1" class="ui-tabs-tab ui-corner-top ui-state-default ui-tab" aria-controls="graphs" aria-labelledby="ui-id-3" aria-selected="false" aria-expanded="false">
+                <a href="#network" role="presentation" tabindex="-1" class="ui-tabs-anchor" id="ui-id-3">Network Files</a>
+            </li>
+        </ul>
+        <div>
+            <!-- JOB INFORMATION -->
+            <div id="info" aria-labelledby="ui-id-1" role="tabpanel" class="ui-tabs-panel ui-corner-bottom ui-widget-content" aria-hidden="false">
+                <p>The parameters used for the initial submission and the finalization are summarized in the table below.</p>
+                <h3>Analysis Summary</h3>
+                <table width="100%" class="pretty no-stretch">
+                    {% for row in analysis_summary %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+                <h3>Dataset Summary</h3>
+                <table width="100%" class="pretty no-stretch">
+                    {% for row in generate_summary %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+                <!--
+                <tbody><tr><td>Job Number</td><td>27106</td></tr>
+                    <tr><td>Database Version</td><td>{{db_version}}</td></tr>
+                    <tr><td>Input Option</td><td>{{job_type}}</td></tr>
+                    <tr><td>Job Name</td><td>{{job_name}}</td></tr>
+                    <tr><td>E-Value for SSN Edge Calculation</td><td>{{edge_evalue}}</td></tr>
+                    <tr><td>Pfam / InterPro Family</td><td>IPR004184</td></tr>
+                    <tr><td>Number of IDs in Pfam / InterPro Family</td><td>25,513</td></tr>
+                    <tr><td>Domain Option</td><td>off</td></tr>
+                    <tr><td>UniRef Version</td><td>90</td></tr>
+                    <tr><td>Number of Cluster IDs in UniRef90 Family</td><td>6,937</td></tr>
+                    <tr><td>Exclude Fragments</td><td>Yes</td></tr>
+                    <tr><td>Total Number of Sequences in Dataset</td><td>6,937</td></tr>
+                    <tr><td>Total Number of Edges</td><td>20,963,002</td></tr>
+                    <tr><td>Number of Unique Sequences</td><td>6,937</td></tr>
+                    <tr><td>Convergence Ratio<a class="question" title="        The convergence ratio is a measure of the similarity of the sequences used in the BLAST.  It is the
+                            ratio of the total number of edges retained from the BLAST (e-values less than the specified threshold;
+                            default 5) to the total number of sequence pairs.  The value decreases from 1.0 for sequences that are
+                            very similar (identical) to 0.0 for sequences that are very different (unrelated).">?</a></td><td>0.871</td></tr>
+                </tbody></table>
+                <div style="float: right"><a href="/efi-est/stepc.php?id=27106&amp;key=6cc7a3bd8195a84587780867cabf18efccf529c5&amp;as-table=1&amp;x=2022"><button class="normal">Download Information</button></a></div>
+                <div style="clear: both"></div>
+                    -->
+            </div>
+            <div id="network" aria-labelledby="ui-id-3" role="tabpanel" class="ui-tabs-panel ui-corner-bottom ui-widget-content" aria-hidden="true" style="display: none;">
+                <p>The panels below provide files for full and representative node SSNs for download with the indicated numbers of nodes and edges. As an approximate guide, SSNs with ~2M edges can be opened with 16 GB RAM, ~5M edges can be opened with 32 GB RAM, ~10M edges can be opened with 64 GB RAM, ~20M edges can be opened with 128 GB RAM, ~40M edges can be opened with 256 GB RAM, and ~120M edges can be opened with 768 GB RAM.</p>
+                <p>Files may be transferred to the Genome Neighborhood Tool (GNT), the Color SSN utility, the Cluster Analysis utility, or the Neighborhood Connectivity utility.</p>
+                <h3>Full Network</h3>
+                <p>Each node in the network represents a single protein sequence.</p>
+                <table width="100%" class="pretty tbl-center">
+                    <thead>
+                        <th></th>
+                        <th># Nodes</th>
+                        <th># Edges</th>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><a href="{{ full_ssn_file }}"><button class="mini">Download ZIP</button></a></td>
+                            <td>{{ full_num_nodes }}</td>
+                            <td>{{ full_num_edges }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Representative Node Networks</h3>
+                <p>In representative node (RepNode) networks, each node in the network represents a collection of proteins grouped according to percent identity. For example, for a 75% identity RepNode network, all connected sequences that share 75% or more identity are grouped into a single node (meta node). Sequences are collapsed together to reduce the overall number of nodes, making for less complicated networks easier to load in Cytoscape.</p>
+                <p>The cluster organization is not changed, and the clustering of sequences remains identical to the full network.</p>
+                <table width="100%" class="pretty">
+                    <thead>
+                        <th></th>
+                        <th>% ID</th>
+                        <th># Nodes</th>
+                        <th># Edges</th>
+                    </thead>
+                    <tbody>
+                        {% for row in repnode_ssns %}
+                        <tr>
+                            {% for cell in row %}
+                                {% if i == 0 %}
+                            <td><a href="{{ cell }}"><button class="mini">Download ZIP</button></a></td>
+                                {% else %}
+                            <td>{{ cell }}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    {% raw %}
+    <script>
+        $(document).ready(function() {
+            $(".tabs").tabs();
+        });
+    </script>
+    {% endraw %}
+</body>
+</html>
