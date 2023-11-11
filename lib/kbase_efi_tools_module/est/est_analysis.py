@@ -13,7 +13,8 @@ from pathlib import Path
 # This is the SFA base package which provides the Core app class.
 from base import Core
 from installed_clients.DataFileUtilClient import DataFileUtil
-from ..utils.utils import EfiUtils as utils
+from ..utils.utils import EfiUtils
+from ..utils.data_utils import DataUtils
 
 MODULE_DIR = '/kb/module'
 TEMPLATES_DIR = os.path.join(MODULE_DIR, 'lib/templates')
@@ -45,8 +46,10 @@ class EstAnalysisJob:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
         self.shared_folder = shared_folder
-        self.output_dir = os.path.join(shared_folder, 'job_temp')
-        utils.mkdir_p(self.output_dir)
+        #self.output_dir = os.path.join(shared_folder, 'job_temp')
+        self.output_dir = '/kb/module/work'
+        EfiUtils.mkdir_p(self.output_dir)
+        print('Creating ' + self.output_dir)
 
         self.wsclient = clients.Workspace
         self.dfu = clients.DataFileUtil
@@ -162,27 +165,34 @@ class EstAnalysisJob:
             input_name = params.get('data_transfer_name', 'Direct')
             return input_name, data, data_transfer_zip
 
-        objects = self.wsclient.get_objects2({'objects': [{'ref': params['similarity_ref']}]})
+        objects = self.wsclient.get_objects2({'objects': [{'ref': params['compute_dataset_ref']}]})
         if not isinstance(objects, dict) or len(objects) == 0:
-            return None
+            raise ValueError('Unable to find input dataset ' + params['compute_dataset_ref'])
+            #return None
+
+        print(str(params))
+        print(str(objects))
 
         objects = objects['data']
         if len(objects) == 0:
-            return None
+            raise ValueError('No objects in input dataset')
+            #return None
         the_object = objects[0]
         data = the_object['data']
-        if the_object.get('type') == None:
-            return None
-        type_name = the_object['type']
 
-        if type_name != 'ComputedProteinSims':
-            return None
+        (input_name, obj_type) = DataUtils.get_obj_name_and_type_from_obj_info(the_object['info'])
+        if obj_type != 'ComputedProteinSims':
+            raise ValueError('Invalid type in input dataset')
+            #return None
 
         data_transfer_zip = os.path.join(self.output_dir, 'data_transfer.zip')
 
+        if not os.path.exists(self.output_dir):
+            raise ValueError('Output dir ' + self.output_dir + ' does not exist')
         gen_file_hid = data['gen_file']
-        self.dfu.file_to_shock({'handle_id': gen_file_hid, 'file_path': data_transfer_zip, 'unpack': 'unpack'})
+        self.dfu.shock_to_file({'handle_id': gen_file_hid, 'file_path': data_transfer_zip, 'unpack': 'unpack'})
 
+        print('Got ' + input_name + ' ' + str(data) + ' ' + data_transfer_zip)
         return input_name, data, data_transfer_zip
 
 
@@ -203,7 +213,7 @@ class EstAnalysisJob:
         """
         # This path is required to properly use the template.
         reports_path = self.get_reports_path()
-        utils.mkdir_p(reports_path)
+        EfiUtils.mkdir_p(reports_path)
         #output_dir = os.path.join(self.output_dir, 'output')
         output_dir = self.output_dir
 

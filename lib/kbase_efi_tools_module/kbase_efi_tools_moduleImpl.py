@@ -145,8 +145,9 @@ class kbase_efi_tools_module:
         est_conf = params.get('efi_est_config')
         if est_conf != None:
             config['efi_est_config'] = est_conf
-        if params.get('similarity_ref') == None and params.get('data_transfer_zip') == None:
-            raise ValueError('Unable to run EST analysis app: must provide similarity_ref')
+        if params.get('compute_dataset_ref') == None and params.get('data_transfer_zip') == None:
+            info = str(params)
+            raise ValueError('Unable to run EST analysis app: must provide compute_dataset_ref or data_transfer_zip (provided: ' + str + ')')
 
         job = KbEstAnalysisJob(ctx, config)
 

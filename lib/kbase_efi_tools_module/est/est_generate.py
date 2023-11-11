@@ -47,7 +47,8 @@ class EstGenerateJob:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
         self.shared_folder = shared_folder
-        self.output_dir = os.path.join(self.shared_folder, 'job_temp')
+        #self.output_dir = os.path.join(self.shared_folder, 'job_temp')
+        self.output_dir = '/kb/module/work'
         utils.mkdir_p(self.output_dir)
 
         self.script_file = ''
@@ -347,8 +348,13 @@ class EstGenerateJob:
                 "convergence_ratio":                dataset_vals["convergence_ratio"]
             }
             new_object["sequenceset"] = kb_params['sequenceset_ref']
+
+            if "workspace_name" in kb_params:
+                workspace_name = kb_params["workspace_name"]
+            else:
+                workspace_name = str(kb_params["workspace_id"])
             
-            dataset_ref = str(kb_params["workspace"]) + "/" + kb_params["output_name"]
+            dataset_ref = str(kb_params["workspace_id"]) + "/" + kb_params["output_name"]
             #Tracking that a new workspace object has been created so we can include this information in the report
             self.output_objects.append({"ref": dataset_ref, "description": "Precomputed similarities for generating sequence similarity networks"})
             
@@ -377,10 +383,6 @@ class EstGenerateJob:
             ##elif isinstance(kb_params["workspace"], str):
             #else:
             #    save_params["workspace"] = kb_params["workspace"]
-            if "workspace_name" in kb_params:
-                workspace_name = kb_params["workspace_name"]
-            else:
-                workspace_name = str(kb_params["workspace_id"])
             save_params["workspace"] = workspace_name
             print("Saving files to workspace " + workspace_name)
 

@@ -10,7 +10,7 @@ WORKDIR /kb/module
 COPY ./ /kb/module
 RUN make all
 
-ARG RESETCONFIG=true
+ARG RESETCONFIG=false
 
 # Configure EFI apps
 WORKDIR /apps
