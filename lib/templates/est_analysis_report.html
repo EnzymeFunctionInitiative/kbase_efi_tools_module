@@ -43,6 +43,7 @@
     /*! CSS Used from: https://efi.igb.illinois.edu/css/buttons.css?v=3 */
     button{ze:16px;font-family:Arial;font-weight:normal;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;padding:10px 10%;text-decoration:none;display:inline-block;margin-top:6px;margin-bottom:15px;}
     button.normal{border:1px solid #bbb;background-color:#ddd;display:inline-block;padding:6px 12px;margin-top:5px;margin-bottom:5px;border-radius:0px;}
+    button.mini{font-size: 90%;padding: 2px 9px;margin: 0;border: 1px solid #bbb;border-radius: 0px;background-color: #ddd;}
     a button:active{position:relative;top:1px;}
     /*! CSS Used from: https://efi.igb.illinois.edu/css/global.css?v=15 */
     a{color:#0c4377;}
@@ -59,8 +60,9 @@
     hr.light{border:0;border-top:1px solid #ccc;}
     /*! CSS Used from: https://efi.igb.illinois.edu/css/table.css?v=5 */
     table.pretty{border-collapse:collapse;margin-bottom:20px;border-top:1px solid #aaa;border-bottom:1px solid #aaa;border-right:1px solid #aaa;width:100%;}
-    table.pretty td{border-left:1px solid #aaa;margin:0;padding:7px;}
+    table.pretty td,th{border-left:1px solid #aaa;margin:0;padding:7px;}
     table.pretty tr:nth-of-type(even) td{background-color:#eee;}
+    table.pretty th {background-color: #bbb;}
     table.no-stretch tr td:first-child{width:1%;white-space:nowrap;}
     td{overflow-wrap:break-word;padding:10px;}
     /*! CSS Used from: https://efi.igb.illinois.edu/css/jquery-custom.css?v=2 */
@@ -205,7 +207,7 @@
                         {% for row in repnode_ssns %}
                         <tr>
                             {% for cell in row %}
-                                {% if i == 0 %}
+                                {% if loop.index0 == 0 %}
                             <td><a href="{{ cell }}"><button class="mini">Download ZIP</button></a></td>
                                 {% else %}
                             <td>{{ cell }}</td>

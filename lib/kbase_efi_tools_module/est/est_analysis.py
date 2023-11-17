@@ -69,8 +69,8 @@ class EstAnalysisJob:
         input_dataset = self.get_input_dataset(params)
         if input_dataset == None:
             raise ValueError('Unable to find input dataset from params ' + str(params))
-        input_name = input_dataset[0]
-        input_data = input_dataset[1]
+        self.input_name = input_dataset[0]
+        self.input_data = input_dataset[1]
         input_dataset_zip = input_dataset[2]
 
         create_job_pl = os.path.join(self.est_dir, 'create_job.pl')
@@ -85,7 +85,7 @@ class EstAnalysisJob:
 
         self._log(params)
 
-        process_params = {'type': 'analysis'}
+        process_params = {'type': 'analysis', 'ssn_name': params.get('ssn_name')}
         process_params['a_job_dir'] = self.output_dir
         process_params['zip_transfer'] = input_dataset_zip
         process_params['filter'] = params.get('filter', 'eval')
@@ -96,6 +96,8 @@ class EstAnalysisJob:
             process_params['maxlen'] = params['max_len']
         if params.get('uniref_version') != None:
             process_params['uniref_version'] = params['uniref_version']
+
+        self.process_params = process_params
 
         json_str = json.dumps(process_params)
 
@@ -225,10 +227,9 @@ class EstAnalysisJob:
         if ssn_data.get('full_ssn_file') == None:
             raise ValueError('Unable to parse stats file')
 
-        ssn_file             = 'ssn.zip'
+        ssn_file             = 'full_ssn.xgmml.zip'
         ssn_file_out         = os.path.join(reports_path, ssn_file)
         ssn_file_src         = os.path.join(output_dir, ssn_data['full_ssn_file'])
-        ssn_file_rel         = ssn_file
 
         #TODO: add the images into the EFI code.
         # Actually, we probably don't want to do this.
@@ -249,9 +250,15 @@ class EstAnalysisJob:
         #shutil.copyfile(alignment_length_src, alignment_length_out)
         #shutil.copyfile(percent_identity_src, percent_identity_out)
         shutil.copyfile(ssn_file_src, ssn_file_out)
+        for info in ssn_data['repnode_ssns']:
+            src_file = os.path.join(output_dir, info[0])
+            dest_file = os.path.join(reports_path, info[0])
+            shutil.copyfile(src_file, dest_file)
 
-        generate_summary = []
-        analysis_summary = []
+        generate_summary = [['Dataset Name', self.input_name]]
+        for attr, val in self.input_data.items():
+            generate_summary.append([attr, val])
+        analysis_summary = [['Network Name', self.process_params['ssn_name']], ['Alignment Score', self.process_params['minval']]]
 
         template_variables = ssn_data
         template_variables['generate_summary'] = generate_summary
@@ -281,7 +288,7 @@ class EstAnalysisJob:
                     else:
                         mx = re.search(r"repnode-([0-9\.]+)_ssn", line)
                         if mx != None:
-                            rep_id = float(mx.group(1)) * 100
+                            rep_id = int(float(mx.group(1)) * 100)
                             repnode_ssns.append([parts[0] + '.zip', rep_id, parts[1], parts[2]])
                     line = fh.readline()
         data['repnode_ssns'] = repnode_ssns
