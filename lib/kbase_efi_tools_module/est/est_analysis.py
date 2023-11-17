@@ -30,6 +30,10 @@ def get_streams(process):
 
 class EstAnalysisJob:
 
+    def _log(self, message):
+        if self.is_debug:
+            print(message)
+
     def __init__(self, config, shared_folder, clients):
         #TODO: make this a config variable
         est_home = '/apps/EST'
@@ -45,11 +49,13 @@ class EstAnalysisJob:
         else:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
+        self.is_debug = config.get('debug', True) or ('PYTEST_CURRENT_TEST' in os.environ)
+
         self.shared_folder = shared_folder
-        #self.output_dir = os.path.join(shared_folder, 'job_temp')
-        self.output_dir = '/kb/module/work'
+        self.output_dir = EfiUtils.get_unique_dir(shared_folder, 'analysis_')
+        #self.output_dir = '/kb/module/work'
         EfiUtils.mkdir_p(self.output_dir)
-        print('Creating ' + self.output_dir)
+        self._log('Creating ' + self.output_dir)
 
         self.wsclient = clients.Workspace
         self.dfu = clients.DataFileUtil
@@ -60,7 +66,6 @@ class EstAnalysisJob:
 
 
     def create_job(self, params):
-
         input_dataset = self.get_input_dataset(params)
         if input_dataset == None:
             raise ValueError('Unable to find input dataset from params ' + str(params))
@@ -78,7 +83,7 @@ class EstAnalysisJob:
         if params.get('ascore') == None:
             raise ValueError('Ascore parameter is necessary in order to create EST analysis job')
 
-        print(params)
+        self._log(params)
 
         process_params = {'type': 'analysis'}
         process_params['a_job_dir'] = self.output_dir
@@ -94,8 +99,8 @@ class EstAnalysisJob:
 
         json_str = json.dumps(process_params)
 
-        print("### JSON INPUT PARAMETERS TO create_job.pl ####################################################################\n")
-        print(json_str + "\n\n\n\n")
+        self._log("### JSON INPUT PARAMETERS TO create_job.pl ####################################################################\n")
+        self._log(json_str + "\n\n\n\n")
 
         process_args.extend(['--params', "'"+json_str+"'"])
         process_args.extend(['--env-scripts', ','.join(self.est_env)])
@@ -106,21 +111,18 @@ class EstAnalysisJob:
             stderr=subprocess.PIPE,
         )
 
-        #junk = Path(self.efi_est_config).read_text()
-        #print(junk)
-        #junk = Path(self.efi_db_config).read_text()
-        #print(junk)
-
         stdout, stderr = get_streams(process)
         if stdout != None:
             script_file = stdout.strip()
         else:
             raise ValueError('Unable to create EST analysis job: unable to obtain output streams')
 
-        print("### OUTPUT FROM CREATE JOB ####################################################################################\n")
-        print(str(stdout) + "\n---------\n")
-        print("### ERR\n")
-        print(str(stderr) + "\n\n\n\n")
+        self._log("### OUTPUT FROM CREATE JOB ####################################################################################\n")
+        self._log(str(stdout) + "\n---------\n")
+        self._log("### ERR\n")
+        self._log(str(stderr) + "\n\n\n\n")
+        self._log(os.listdir(self.output_dir))
+        self._log("END ERR")
 
         self.script_file = script_file
 
@@ -144,10 +146,10 @@ class EstAnalysisJob:
         if stdout == None:
             raise ValueError('Unable to run EST analysis job: unable to obtain output streams')
 
-        print("### OUTPUT FROM GENERATE ######################################################################################\n")
-        #print(str(stdout) + "\n---------\n")
-        print("### ERR\n")
-        print(str(stderr) + "\n\n\n\n")
+        self._log("### OUTPUT FROM GENERATE ######################################################################################\n")
+        self._log(str(stdout) + "\n---------\n")
+        self._log("### ERR\n")
+        self._log(str(stderr) + "\n\n\n\n")
 
         ssn_ref = self.save_output()
 
@@ -170,9 +172,6 @@ class EstAnalysisJob:
             raise ValueError('Unable to find input dataset ' + params['compute_dataset_ref'])
             #return None
 
-        print(str(params))
-        print(str(objects))
-
         objects = objects['data']
         if len(objects) == 0:
             raise ValueError('No objects in input dataset')
@@ -190,9 +189,12 @@ class EstAnalysisJob:
         if not os.path.exists(self.output_dir):
             raise ValueError('Output dir ' + self.output_dir + ' does not exist')
         gen_file_hid = data['gen_file']
-        self.dfu.shock_to_file({'handle_id': gen_file_hid, 'file_path': data_transfer_zip, 'unpack': 'unpack'})
+        ret_info = self.dfu.shock_to_file({'handle_id': gen_file_hid, 'file_path': data_transfer_zip, 'unpack': None})
+        self._log(str(ret_info))
 
-        print('Got ' + input_name + ' ' + str(data) + ' ' + data_transfer_zip)
+        self._log(os.listdir(self.output_dir))
+        self._log('Got ' + input_name + ' ' + str(data) + ' ' + gen_file_hid + ' ' + data_transfer_zip)
+        
         return input_name, data, data_transfer_zip
 
 
@@ -217,7 +219,7 @@ class EstAnalysisJob:
         #output_dir = os.path.join(self.output_dir, 'output')
         output_dir = self.output_dir
 
-        print(os.listdir(output_dir))
+        self._log(os.listdir(output_dir))
 
         ssn_data = self.load_stats_file(output_dir)
         if ssn_data.get('full_ssn_file') == None:
@@ -324,8 +326,6 @@ class KbEstAnalysisJob(Core):
 
         output_report = self.create_report_from_template(template_path, config)
         output_report['shared_folder'] = self.shared_folder
-        print("OUTPUT REPORT\n")
-        print(str(output_report) + "\n")
         return output_report
 
 

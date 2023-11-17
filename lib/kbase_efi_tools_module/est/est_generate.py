@@ -14,7 +14,7 @@ from os.path import exists
 # This is the SFA base package which provides the Core app class.
 from base import Core
 #from installed_clients.DataFileUtilClient import DataFileUtil
-from ..utils.utils import EfiUtils as utils
+from ..utils.utils import EfiUtils
 
 MODULE_DIR = "/kb/module"
 TEMPLATES_DIR = os.path.join(MODULE_DIR, "lib/templates")
@@ -29,6 +29,10 @@ def get_streams(process):
 
 
 class EstGenerateJob:
+
+    def _log(self, message):
+        if self.is_debug:
+            print(message)
 
     def __init__(self, config, shared_folder, clients):
 
@@ -46,10 +50,13 @@ class EstGenerateJob:
         else:
             self.efi_est_config = '/apps/EST/env_conf.sh'
 
+        self.is_debug = config.get('debug', True) or ('PYTEST_CURRENT_TEST' in os.environ)
+
         self.shared_folder = shared_folder
-        #self.output_dir = os.path.join(self.shared_folder, 'job_temp')
-        self.output_dir = '/kb/module/work'
-        utils.mkdir_p(self.output_dir)
+        self.output_dir = EfiUtils.get_unique_dir(shared_folder, 'generate_')
+        #self.output_dir = '/kb/module/work'
+        EfiUtils.mkdir_p(self.output_dir)
+        self._log('Creating ' + self.output_dir)
 
         self.script_file = ''
         self.est_dir = est_home
@@ -78,7 +85,7 @@ class EstGenerateJob:
         if kb_params.get('job_id') != None:
             process_args.extend(['--job-id', kb_params['job_id']])
 
-        print(kb_params)
+        self._log(kb_params)
 
         process_params = {'type': '', 'exclude_fragments': 0}
         job_name_blast = self.get_blast_params(kb_params, process_params)
@@ -88,8 +95,8 @@ class EstGenerateJob:
 
         json_str = json.dumps(process_params)
 
-        print("### JSON INPUT PARAMETERS TO create_job.pl ####################################################################\n")
-        print(json_str + "\n\n\n\n")
+        self._log("### JSON INPUT PARAMETERS TO create_job.pl ####################################################################\n")
+        self._log(json_str + "\n\n\n\n")
 
         process_args.extend(['--params', "'"+json_str+"'"])
         process_args.extend(['--env-scripts', ','.join(self.est_env)])
@@ -106,10 +113,10 @@ class EstGenerateJob:
         else:
             return None
 
-        print("### OUTPUT FROM CREATE JOB ####################################################################################\n")
-        print(str(stdout) + "\n---------\n")
-        print("### ERR\n")
-        print(str(stderr) + "\n\n\n\n")
+        self._log("### OUTPUT FROM CREATE JOB ####################################################################################\n")
+        self._log(str(stdout) + "\n---------\n")
+        self._log("### ERR\n")
+        self._log(str(stderr) + "\n\n\n\n")
 
         self.job_type = process_params['type']
         self.job_name = ""
@@ -164,7 +171,7 @@ class EstGenerateJob:
                 #TODO: write text to a file
                 fasta_file_path = ''
             elif kb_params['option_fasta'].get('fasta_file') == None:
-                print('Error')#TODO: make an error here
+                self._log('Error')#TODO: make an error here
 
             process_params['fasta_file'] = fasta_file_path
             if kb_params['option_fasta'].get('fasta_exclude_fragments') and kb_params['option_fasta']['fasta_exclude_fragments'] == 1:
@@ -186,7 +193,7 @@ class EstGenerateJob:
                 #TODO: write this to a file
                 id_list_file = ''
             elif kb_params['option_accession'].get('acc_input_file') == None:
-                print('Error')
+                self._log('Error')
                 #TODO: make an error here
 
             process_params['id_list_file'] = id_list_file
@@ -213,28 +220,28 @@ class EstGenerateJob:
         stdout, stderr = get_streams(process)
 
         script_contents = Path(self.script_file).read_text()
-        print(os.listdir(self.output_dir + '/output'))
-        print('### SCRIPT OUTPUT #############################################################################################\n')
-        print(script_contents)
-        print('### FILE OUTPUT ###############################################################################################\n')
+        self._log(os.listdir(self.output_dir + '/output'))
+        self._log('### SCRIPT OUTPUT #############################################################################################\n')
+        self._log(script_contents)
+        self._log('### FILE OUTPUT ###############################################################################################\n')
         junk = Path(self.output_dir + '/output/blastfinal.tab').read_text()
-        print(junk[0:1000] + '\n')
-        print('########\n')
+        self._log(junk[0:1000] + '\n')
+        self._log('########\n')
         junk = Path(self.output_dir + '/output/allsequences.fa').read_text()
-        print(junk[0:1000] + '\n')
-        print('### OUTPUT FROM GENERATE ######################################################################################\n')
-        print(str(stdout) + '\n---------\n')
-        print('### ERR\n')
-        print(str(stderr) + '\n\n\n\n')
-        print('###############################################################################################################\n')
+        self._log(junk[0:1000] + '\n')
+        self._log('### OUTPUT FROM GENERATE ######################################################################################\n')
+        self._log(str(stdout) + '\n---------\n')
+        self._log('### ERR\n')
+        self._log(str(stderr) + '\n\n\n\n')
+        self._log('###############################################################################################################\n')
 
         kb_params["output_name"] = re.sub(r"[^a-z0-9_]+", "_", self.job_name, count=0, flags=re.IGNORECASE)
 
         #sequence_set = "TODO"
         #if not "sequenceset_ref" in kb_params:
         kb_params["sequenceset_ref"] = self.get_sequence_set_ref(kb_params)
-        print("SEQUENCESET_REF")
-        print(kb_params["sequenceset_ref"])
+        self._log("SEQUENCESET_REF")
+        self._log(kb_params["sequenceset_ref"])
 
         if not "output_name" in kb_params:
             kb_params["output_name"] = self.job_name
@@ -268,7 +275,7 @@ class EstGenerateJob:
                     "name": set_name
                 }]
         object_info = self.dfu.save_objects({"id": workspace_id, "objects": ws_inputs})
-        ref_id = utils.object_info_to_ref(object_info)
+        ref_id = EfiUtils.object_info_to_ref(object_info)
         return ref_id
 
     def save_input_options(self, dataset_vals):
@@ -324,8 +331,8 @@ class EstGenerateJob:
         #First saving output file to KBase S3 using data file util
         handle_info = None
         if exists(dataset_vals["output_file"]):
-            print("Saving precomputed data to KBase S3")
-            handle_info = self.dfu.file_to_shock({'file_path': dataset_vals["output_file"],'make_handle': 1, 'pack': 'gzip'})
+            self._log("Saving precomputed data to KBase S3")
+            handle_info = self.dfu.file_to_shock({'file_path': dataset_vals["output_file"],'make_handle': 1, 'pack': None})
 
         #Next creating workspace object to house the output file handle
         if handle_info:
@@ -384,11 +391,11 @@ class EstGenerateJob:
             #else:
             #    save_params["workspace"] = kb_params["workspace"]
             save_params["workspace"] = workspace_name
-            print("Saving files to workspace " + workspace_name)
+            self._log("Saving files to workspace " + workspace_name)
 
             #Saving the object to the workspace  
             object_info = self.wsclient.save_objects(save_params)
-            ref_id = utils.object_info_to_ref(object_info)
+            ref_id = EfiUtils.object_info_to_ref(object_info)
             return ref_id
         return None
 
@@ -400,7 +407,7 @@ class EstGenerateJob:
         """
         # This path is required to properly use the template.
         reports_path = self.get_reports_path()
-        utils.mkdir_p(reports_path)
+        EfiUtils.mkdir_p(reports_path)
 
         length_histogram = "length_histogram.png" if self.job_type == "blast" else "length_histogram_uniprot.png"
         alignment_length = "alignment_length.png"
@@ -426,8 +433,8 @@ class EstGenerateJob:
         number_of_edges_rel = number_of_edges
         length_histogram_uniref_rel = length_histogram_uniref
 
-        print(os.listdir(self.output_dir + "/output"))
-        print(length_histogram_src + " --> " + length_histogram_out)
+        self._log(os.listdir(self.output_dir + "/output"))
+        self._log(length_histogram_src + " --> " + length_histogram_out)
 
         shutil.copyfile(length_histogram_src, length_histogram_out)
         shutil.copyfile(alignment_length_src, alignment_length_out)
@@ -560,8 +567,6 @@ class KbEstGenerateJob(Core):
 
         output_report = self.create_report_from_template(template_path, config)
         output_report["shared_folder"] = self.shared_folder
-        print("OUTPUT REPORT\n")
-        print(str(output_report) + "\n")
         return output_report
 
 

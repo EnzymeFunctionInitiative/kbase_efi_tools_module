@@ -2,29 +2,36 @@
 import os
 import re
 import shutil
+import random
+
+from ..utils.utils import EfiUtils
 
 
 class EfiTestUtils:
 
-    def __init__(self, cls):
+    def __init__(self, cls, workspace_id, workspace_name, dfu, wsclient):
         self.cls = cls
+        self.workspace_id = workspace_id
+        self.workspace_name = workspace_name
         self.load_test_info(cls)
+        self.dfu = dfu
+        self.wsclient = wsclient
         cls.test_data_dir = self.get_data_dir_path()
 
     def load_test_info(self, cls):
         data_dir = self.get_data_dir_path()
-        num_seq_file = data_dir + "/expected_seq.txt"
+        num_seq_file = data_dir + '/expected_seq.txt'
         excl_frag_num_seq_data = {}
         with_frag_num_seq_data = {}
         if os.path.isfile(num_seq_file):
             with open(num_seq_file) as fh:
                 line = fh.readline()
                 while line:
-                    mx = re.search(r"^num_expected_no_fragments\t([^\t]+)\t(\d+)\s*$", line)
+                    mx = re.search(r'^num_expected_no_fragments\t([^\t]+)\t(\d+)\s*$', line)
                     if mx != None:
                         excl_frag_num_seq_data[mx.group(1)] = mx.group(2)
                     else:
-                        mx = re.search(r"^num_expected_fragments\t([^\t]+)\t(\d+)\s*$", line)
+                        mx = re.search(r'^num_expected_fragments\t([^\t]+)\t(\d+)\s*$', line)
                         if mx != None:
                             with_frag_num_seq_data[mx.group(1)] = mx.group(2)
                     line = fh.readline()
@@ -39,7 +46,7 @@ class EfiTestUtils:
 
     def count_lines(self, file_path):
         lc = 0
-        with open(file_path, "r") as fh:
+        with open(file_path, 'r') as fh:
             line = fh.readline()
             while line:
                 lc = lc + 1
@@ -47,26 +54,26 @@ class EfiTestUtils:
         return lc
 
     def read_data_from_file(self, file_path):
-        with open(file_path, "r") as fh:
+        with open(file_path, 'r') as fh:
             contents = fh.read()
             return contents
 
     def save_data_to_file(self, contents, file_path):
-        with open(file_path, "w") as fh:
+        with open(file_path, 'w') as fh:
             fh.write(contents)
 
     def get_test_data_file(self, file_type):
         data_dir = self.get_data_dir_path()
         if data_dir == None: return None
 
-        if file_type == "fasta":
-            file_path = os.path.join(data_dir, "PF05544_sp.fasta")
-        elif file_type == "accession":
-            file_path = os.path.join(data_dir, "PF05544_sp.id_list.txt")
-        elif file_type == "blast":
-            file_path = os.path.join(data_dir, "blast_seq.fa")
-        elif file_type == "data_transfer":
-            file_path = os.path.join(data_dir, "data_transfer.zip")
+        if file_type == 'fasta':
+            file_path = os.path.join(data_dir, 'PF05544_sp.fasta')
+        elif file_type == 'accession':
+            file_path = os.path.join(data_dir, 'PF05544_sp.id_list.txt')
+        elif file_type == 'blast':
+            file_path = os.path.join(data_dir, 'blast_seq.fa')
+        elif file_type == 'data_transfer':
+            file_path = os.path.join(data_dir, 'data_transfer.zip')
         else:
             return None
 
@@ -78,13 +85,13 @@ class EfiTestUtils:
         return file_path
 
     def get_data_dir_path(self):
-        conf_file = "/apps/EFIShared/testing_db_conf.sh"
+        conf_file = '/apps/EFIShared/testing_db_conf.sh'
         data_path = None
-        with open(conf_file, "r") as fh:
+        with open(conf_file, 'r') as fh:
             line = fh.readline()
             print(line)
             while line and not data_path:
-                rx = re.search("^export EFI_DB=(.+)/[^/]+$", line)
+                rx = re.search('^export EFI_DB=(.+)/[^/]+$', line)
                 if rx != None:
                     data_path = rx.group(1)
                 line = fh.readline()
@@ -98,7 +105,7 @@ class EfiTestUtils:
 
     def get_job_output_dir(self):
         # This is where the EST jobs put their output data
-        output_dir = self.cls.scratch + "/job"
+        output_dir = self.cls.scratch + '/job'
         return output_dir
 
 
@@ -110,81 +117,153 @@ class EfiTestUtils:
 
 
     def get_blast_test_params(self, test_opts):
-        test_blast_seq_file = self.get_test_data_file("blast")
+        test_blast_seq_file = self.get_test_data_file('blast')
         blast_seq = self.read_data_from_file(test_blast_seq_file) # Read the test file data
-        blast_file_path = self.get_job_output_dir() + "/query.fa"
-        self.save_data_to_file(">INPUT_ID\n"+blast_seq+"\n", blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
+        blast_file_path = self.get_job_output_dir() + '/query.fa'
+        self.save_data_to_file('>INPUT_ID\n'+blast_seq+'\n', blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
 
-        blast_data = {"blast_exclude_fragments": test_opts[0]}
+        blast_data = {'blast_exclude_fragments': test_opts[0]}
         if test_opts[1]:
-            blast_data["sequence_file"] = blast_file_path
+            blast_data['sequence_file'] = blast_file_path
         else:
-            blast_data["blast_sequence"] = blast_seq
+            blast_data['blast_sequence'] = blast_seq
 
         return blast_data
 
     def get_blast_test_params(self, test_opts):
-        test_blast_seq_file = self.get_test_data_file("blast")
+        test_blast_seq_file = self.get_test_data_file('blast')
         blast_seq = self.read_data_from_file(test_blast_seq_file) # Read the test file data
-        blast_file_path = self.get_job_output_dir() + "/query.fa"
-        self.save_data_to_file(">INPUT_ID\n"+blast_seq+"\n", blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
+        blast_file_path = self.get_job_output_dir() + '/query.fa'
+        self.save_data_to_file('>INPUT_ID\n'+blast_seq+'\n', blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
 
-        blast_data = {"blast_exclude_fragments": test_opts[0]}
+        blast_data = {'blast_exclude_fragments': test_opts[0]}
         if test_opts[1]:
-            blast_data["sequence_file"] = blast_file_path
+            blast_data['sequence_file'] = blast_file_path
         else:
-            blast_data["blast_sequence"] = blast_seq
+            blast_data['blast_sequence'] = blast_seq
 
         return blast_data
 
 
     def get_family_test_params(self, test_opts):
-        fam_name = "PF05544"
-        fam_data = {"fam_family_name": fam_name, "fam_use_uniref": "none", "fam_exclude_fragments": test_opts[0]}
+        fam_name = 'PF05544'
+        fam_data = {'fam_family_name': fam_name, 'fam_use_uniref': 'none', 'fam_exclude_fragments': test_opts[0]}
         return fam_data
 
     def get_fasta_test_params(self, test_opts):
-        fasta_file = self.get_test_data_file("fasta")
-        fasta_file_job_path = self.get_job_output_dir() + "/input.fa"
-        fasta_data = {"fasta_file": fasta_file_job_path, "fasta_exclude_fragments": test_opts[0]}
+        fasta_file = self.get_test_data_file('fasta')
+        fasta_file_job_path = self.get_job_output_dir() + '/input.fa'
+        fasta_data = {'fasta_file': fasta_file_job_path, 'fasta_exclude_fragments': test_opts[0]}
         return fasta_data
 
     def get_accession_test_params(self, test_opts):
-        acc_file = self.get_test_data_file("accession")
-        acc_file_job_path = self.get_job_output_dir() + "/id_list.txt"
-        acc_data = {"acc_input_file": acc_file_job_path, "acc_exclude_fragments": test_opts[0]}
+        acc_file = self.get_test_data_file('accession')
+        acc_file_job_path = self.get_job_output_dir() + '/id_list.txt'
+        acc_data = {'acc_input_file': acc_file_job_path, 'acc_exclude_fragments': test_opts[0]}
         return acc_data
 
 
     def get_blast_test_params(self, test_opts):
-        test_blast_seq_file = self.get_test_data_file("blast")
+        test_blast_seq_file = self.get_test_data_file('blast')
         blast_seq = self.read_data_from_file(test_blast_seq_file) # Read the test file data
-        blast_file_path = self.get_job_output_dir() + "/query.fa"
-        self.save_data_to_file(">INPUT_ID\n"+blast_seq+"\n", blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
+        blast_file_path = self.get_job_output_dir() + '/query.fa'
+        self.save_data_to_file('>INPUT_ID\n'+blast_seq+'\n', blast_file_path) # Write the test file data to a location that can be read by the job (even though the unit test job can read the test files, we test this to ensure that the scripts are reading from the job locations)
 
-        blast_data = {"blast_exclude_fragments": test_opts[0]}
+        blast_data = {'blast_exclude_fragments': test_opts[0]}
         if test_opts[1]:
-            blast_data["sequence_file"] = blast_file_path
+            blast_data['sequence_file'] = blast_file_path
         else:
-            blast_data["blast_sequence"] = blast_seq
+            blast_data['blast_sequence'] = blast_seq
 
         return blast_data
 
     def get_family_test_params(self, test_opts):
-        fam_name = "PF05544"
-        fam_data = {"fam_family_name": fam_name, "fam_use_uniref": "none", "fam_exclude_fragments": test_opts[0]}
+        fam_name = 'PF05544'
+        fam_data = {'fam_family_name': fam_name, 'fam_use_uniref': 'none', 'fam_exclude_fragments': test_opts[0]}
         return fam_data
 
     def get_fasta_test_params(self, test_opts):
-        fasta_file = self.get_test_data_file("fasta")
-        fasta_file_job_path = self.get_job_output_dir() + "/input.fa"
-        fasta_data = {"fasta_file": fasta_file_job_path, "fasta_exclude_fragments": test_opts[0]}
+        fasta_file = self.get_test_data_file('fasta')
+        fasta_file_job_path = self.get_job_output_dir() + '/input.fa'
+        fasta_data = {'fasta_file': fasta_file_job_path, 'fasta_exclude_fragments': test_opts[0]}
         return fasta_data
 
     def get_accession_test_params(self, test_opts):
-        acc_file = self.get_test_data_file("accession")
-        acc_file_job_path = self.get_job_output_dir() + "/id_list.txt"
-        acc_data = {"acc_input_file": acc_file_job_path, "acc_exclude_fragments": test_opts[0]}
+        acc_file = self.get_test_data_file('accession')
+        acc_file_job_path = self.get_job_output_dir() + '/id_list.txt'
+        acc_data = {'acc_input_file': acc_file_job_path, 'acc_exclude_fragments': test_opts[0]}
         return acc_data
 
+    def create_test_dataset(self, file_path, output_name = 'Test'):
+       
+        #output_file = self.get_test_data_file('data_transfer')
+        #data_dir = self.get_data_dir_path()
+        #print(data_dir)
+        #print(output_file)
+        #print(str(os.listdir(data_dir)))
+
+        #First saving output file to KBase S3 using data file util
+        handle_info = self.dfu.file_to_shock({'file_path': file_path, 'make_handle': 1, 'pack': None})
+
+        #Next creating workspace object to house the output file handle
+        if handle_info:
+            new_object = {
+                'gen_file':                         handle_info['handle']['hid'],
+                'input_sequence_count':             100,
+                'input_type':                       'FAMILY',
+                'input_family_id':                  'PF05544',
+                'evalue_for_ssn_calculation':       5,
+                'domain_option':                    0,
+                'exlude_fragments':                 0,
+                'database_version':                 'XX',
+                'uniref_version':                   0,
+                'ids_in_pfam_family':               100,
+                'cluster_ids_in_uniref_family':     100,
+                'total_sequences_in_dataset':       100,
+                'total_edges':                      100,
+                'unique_sequences':                 100,
+                'convergence_ratio':                1
+            }
+            new_object['sequenceset'] = self.create_dummy_sequence_set()
+
+            dataset_ref = str(self.workspace_id) + '/' + output_name
+            
+            #Setting up the parameters for saving the object
+            save_params = {
+                'objects': [{
+                    'type': 'SequenceSimilarityNetworks.ComputedProteinSims',
+                    'name': output_name,
+                    'data': new_object,
+                    'meta': {},
+                    'provenance': [{
+                        'description': 'EST Generate App Output',
+                        'input_ws_objects': [],
+                        'method': 'run_est_generate_app',
+                        'script_command_line': '',
+                        'method_params': [],
+                        'service': 'kbase_efi_tools_module',
+                        'service_ver': '0.0.1',
+                    }]
+                }]
+            }
+
+            save_params['workspace'] = self.workspace_name
+
+            #Saving the object to the workspace  
+            object_info = self.wsclient.save_objects(save_params)
+            ref_id = EfiUtils.object_info_to_ref(object_info)
+            return ref_id
+        return None
+
+    def create_dummy_sequence_set(self):
+        set_name = 'DummyPSS_' + str(random.randint(100, 100000))
+        ws_inputs = [
+                {
+                    'type': 'KBaseSequences.ProteinSequenceSet',
+                    'data': {'description': set_name, 'id': set_name, 'sequences': [], 'included_types': [], 'ontology_events': [], 'md5': ''},
+                    'name': set_name
+                }]
+        object_info = self.dfu.save_objects({'id': self.workspace_id, 'objects': ws_inputs})
+        ref_id = EfiUtils.object_info_to_ref(object_info)
+        return ref_id
 

@@ -6,6 +6,7 @@ import collections.abc
 import re
 import shutil
 import logging
+import shutil
 from configparser import ConfigParser
 from parameterized import parameterized, parameterized_class
 
@@ -14,6 +15,7 @@ from kbase_efi_tools_module.kbase_efi_tools_moduleServer import MethodContext
 from kbase_efi_tools_module.authclient import KBaseAuth as _KBaseAuth
 
 from installed_clients.WorkspaceClient import Workspace
+from installed_clients.DataFileUtilClient import DataFileUtil
 
 # From the lib/kbase_efi_tools_module directory
 from kbase_efi_tools_module.utils.test_utils import EfiTestUtils
@@ -56,11 +58,13 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         cls.serviceImpl = kbase_efi_tools_module(cls.cfg)
         cls.scratch = cls.cfg['scratch']
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
+        cls.dfu = DataFileUtil(cls.callback_url)
         suffix = int(time.time() * 1000)
         cls.wsName = 'kbase_efi_tools_module_' + str(suffix)
         ret = cls.wsClient.create_workspace({'workspace': cls.wsName})  # noqa
+        cls.workspace_id = ret[0]
 
-        cls.tu = EfiTestUtils(cls)
+        cls.tu = EfiTestUtils(cls, cls.workspace_id, cls.wsName, cls.dfu, cls.wsClient)
 
     @classmethod
     def tearDownClass(cls):
@@ -101,18 +105,23 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         db_conf = '/apps/EFIShared/testing_db_conf.sh'
         efi_est_config = '/apps/EST/testing_env_conf.sh'
 
+        data_transfer_zip_src = self.tu.get_test_data_file("data_transfer")
         output_dir = self.get_output_dir('analysis_')
+        dt_zip_tmp = os.path.join(output_dir, 'dt.zip')
+        shutil.copyfile(data_transfer_zip_src, dt_zip_tmp)
 
-        data_transfer_zip = self.tu.get_test_data_file("data_transfer")
+        dataset_ref = self.tu.create_test_dataset(dt_zip_tmp)
+
         run_data = {
                 'workspace_name': self.wsName,
-                'reads_ref': '70257/2/1',
                 'output_name': 'EstAnalysisApp',
                 'efi_db_config': db_conf,
                 'efi_est_config': efi_est_config,
-                'data_transfer_zip': data_transfer_zip,
-                'data_transfer_name': 'Test',
-                'data_transfer_meta': {},
+                'compute_dataset_ref': dataset_ref,
+                #'compute_dataset_ref': '72126/6/1',
+                #'data_transfer_zip': data_transfer_zip,
+                #'data_transfer_name': 'Test',
+                #'data_transfer_meta': {},
                 'ascore': 25,
                 'output_dir': output_dir
             }
@@ -185,7 +194,6 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 
         run_data = {
                 'workspace_name': self.wsName,
-                'reads_ref': '70257/2/1',
                 'output_name': 'EstGenerateApp',
                 'efi_db_config': db_conf,
                 'efi_est_config': efi_est_config,
