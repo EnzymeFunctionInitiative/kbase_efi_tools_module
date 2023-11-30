@@ -267,3 +267,13 @@ class EfiTestUtils:
         ref_id = EfiUtils.object_info_to_ref(object_info)
         return ref_id
 
+    def get_output_dir(prefix, scratch):
+        dir_num = 0
+        output_dir = os.path.join(scratch, prefix + str(dir_num))
+        print(output_dir)
+        while os.path.exists(output_dir):
+            dir_num = dir_num + 1
+            output_dir = os.path.join(scratch, prefix + str(dir_num))
+        EfiUtils.mkdir_p(output_dir)
+        return output_dir
+

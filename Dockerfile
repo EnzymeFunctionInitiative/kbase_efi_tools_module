@@ -1,4 +1,4 @@
-FROM nilsoberg/kbase-efi:3.8.0-efi-0.5.1
+FROM nilsoberg/kbase-efi:3.8.0-efi-0.1.1
 
 ARG DATA_DIR=/data/efi/0.2.1
 RUN mkdir -p $DATA_DIR

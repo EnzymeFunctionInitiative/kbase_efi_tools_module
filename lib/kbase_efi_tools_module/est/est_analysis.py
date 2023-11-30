@@ -34,7 +34,7 @@ class EstAnalysisJob:
         if self.is_debug:
             print(message)
 
-    def __init__(self, config, shared_folder, clients):
+    def __init__(self, config, shared_folder, clients, is_standalone = False):
         #TODO: make this a config variable
         est_home = '/apps/EST'
         db_conf = config.get('efi_db_config')
@@ -57,8 +57,10 @@ class EstAnalysisJob:
         EfiUtils.mkdir_p(self.output_dir)
         self._log('Creating ' + self.output_dir)
 
-        self.wsclient = clients.Workspace
-        self.dfu = clients.DataFileUtil
+        self.is_standalone = is_standalone
+        if not self.is_standalone:
+            self.wsclient = clients.Workspace
+            self.dfu = clients.DataFileUtil
 
         self.script_file = ''
         self.est_dir = est_home

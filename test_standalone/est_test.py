@@ -13,6 +13,7 @@ from parameterized import parameterized, parameterized_class
 # From the lib/kbase_efi_tools_module directory
 from kbase_efi_tools_module.utils.test_utils import EfiTestUtils
 from kbase_efi_tools_module.est.est_generate import EstGenerateJob
+from kbase_efi_tools_module.est.est_analysis import EstAnalysisJob
 from kbase_efi_tools_module.utils.utils import EfiUtils as utils
 
 
@@ -22,72 +23,45 @@ def get_streams(process):
     Returns decoded stdout,stderr after loading the entire thing into memory
     """
     stdout, stderr = process.communicate()
-    return (stdout.decode("utf-8", "ignore"), stderr.decode("utf-8", "ignore"))
+    return (stdout.decode('utf-8', 'ignore'), stderr.decode('utf-8', 'ignore'))
 
 
 class est_standaloneTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tu = EfiTestUtils(cls)
-        #TODO: make this a config variable
-        est_home = '/apps/EST'
-        cls.est_dir = est_home
-        cls.output_dir = os.getenv("JOB_DIR") + "/test"
-        utils.mkdir_p(cls.output_dir)
+        cls.scratch = os.getenv('JOB_DIR') + '/test'
+        utils.mkdir_p(cls.scratch)
+        cls.tu = EfiTestUtils(cls, None, None, None, None, cls.scratch)
 
     @classmethod
     def tearDownClass(cls):
         #shutil.rmtree(cls.output_dir)
         return
 
-#    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-#    # @unittest.skip("Skip test for debugging")
-#    @parameterized.expand([
-##                           ("blast,ex_frag,use_file", True, True),
-##                           ("blast,ex_frag,no_file", True, False),
-##                           ("blast,frag,use_file", False, True),
-#                           ("blast,frag,no_file", False, False)
-#                           ])
-#    def test_est_generate_blast(self, name, exclude_fragments, use_file):
-#
-#        option = "blast"
-#        test_opts = [exclude_fragments, use_file, option]
-#        test_params = self.tu.get_blast_test_params(test_opts)
-#        expected = self.tu.get_expected(test_opts)
-#        logging.info("RUNNING TEST " + name)
-#        self.run_test("option_" + option, test_params, expected)
-#        return True
 
-    @parameterized.expand([
-                           ("family,ex_frag", True),
-                           ("family,frag", False)
-                           ])
-    def test_est_generate_family(self, name, exclude_fragments):
+    def test_analysis(self):
 
-        option = "family"
-        test_opts = [exclude_fragments, option]
-        test_params = self.tu.get_family_test_params(test_opts)
-        expected = self.tu.get_expected(test_opts)
-        logging.info("RUNNING TEST " + name)
-        output_dir = self.output_dir + "/" + time.strftime("%Y%m%d-%H%M%S.r") + str(random.randrange(0, 1000))
-        utils.mkdir_p(output_dir)
-        self.run_test(output_dir, "option_" + option, test_params, expected)
-        return True
+        db_conf = '/apps/EFIShared/testing_db_conf.sh'
+        efi_est_config = '/apps/EST/testing_env_conf.sh'
 
-    def run_test(self, output_dir, option_key, option_data, num_expected):
-
-        db_conf = "/apps/EFIShared/testing_db_conf.sh"
-        efi_est_config = "/apps/EST/testing_env_conf.sh"
-
-        process_params = {'type': '', 'exclude_fragments': False}
+        data_transfer_zip_src = self.tu.get_test_data_file("data_transfer")
+        output_dir = EfiTestUtils.get_output_dir('analysis_', self.scratch)
+        dt_zip_tmp = os.path.join(output_dir, 'dt.zip')
+        shutil.copyfile(data_transfer_zip_src, dt_zip_tmp)
 
         run_data = {
-                "efi_db_config": db_conf,
-                "efi_est_config": efi_est_config,
+                'workspace_name': '',
+                'output_name': 'EstAnalysisApp',
+                'efi_db_config': db_conf,
+                'efi_est_config': efi_est_config,
+                'data_transfer_zip': dt_zip_tmp,
+                'data_transfer_name': 'Test',
+                'data_transfer_meta': {},
+                'ascore': 25,
+                'output_dir': output_dir
             }
-        run_data[option_key] = option_data
 
-        job = EstGenerateJob(run_data, output_dir)
+        job = EstAnalysisJob(run_data, output_dir, clients=None, is_standalone=True)
 
         script_file = job.create_job(run_data)
 
@@ -97,19 +71,86 @@ class est_standaloneTest(unittest.TestCase):
         job.start_job()
 
 ##        self.assertTrue(script_file != None, "No report returned")
+        #self.assertTrue(ret != None, 'No report returned')
+        #self.assertTrue(isinstance(ret, list), 'Report should be a list')
+        #self.assertTrue(len(ret) > 0, 'Report must have at least one element')
+
+        #shared_dir = ret[0]['shared_folder']
+        #print("OUTPUT DIR IS: " + shared_dir + "\n")
+        #self.assertTrue(os.path.exists(shared_dir), "Shared directory " + shared_dir + " does not exist.")
+
+
+#    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
+#    # @unittest.skip("Skip test for debugging")
+#    @parameterized.expand([
+##                           ('blast,ex_frag,use_file', True, True),
+##                           ('blast,ex_frag,no_file', True, False),
+##                           ('blast,frag,use_file', False, True),
+#                           ('blast,frag,no_file', False, False)
+#                           ])
+#    def test_est_generate_blast(self, name, exclude_fragments, use_file):
+#
+#        option = 'blast'
+#        test_opts = [exclude_fragments, use_file, option]
+#        test_params = self.tu.get_blast_test_params(test_opts)
+#        expected = self.tu.get_expected(test_opts)
+#        logging.info("RUNNING TEST " + name)
+#        self.run_test('option_' + option, test_params, expected)
+#        return True
+
+    @parameterized.expand([
+                           ('family,ex_frag', True),
+                           ('family,frag', False)
+                           ])
+    def test_est_generate_family(self, name, exclude_fragments):
+
+        option = 'family'
+        test_opts = [exclude_fragments, option]
+        test_params = self.tu.get_family_test_params(test_opts)
+        expected = self.tu.get_expected(test_opts)
+        logging.info("RUNNING TEST " + name)
+        output_dir = self.scratch + '/' + time.strftime('%Y%m%d-%H%M%S.r') + str(random.randrange(0, 1000))
+        utils.mkdir_p(output_dir)
+        self.run_test(output_dir, 'option_' + option, test_params, expected)
+        return True
+
+    def run_test(self, output_dir, option_key, option_data, num_expected):
+
+        db_conf = '/apps/EFIShared/testing_db_conf.sh'
+        efi_est_config = '/apps/EST/testing_env_conf.sh'
+
+        run_data = {
+                'workspace_name': '',
+                'efi_db_config': db_conf,
+                'efi_est_config': efi_est_config,
+                'output_name': 'EstGenerateApp',
+                'output_dir': output_dir
+            }
+        run_data[option_key] = option_data
+
+        job = EstGenerateJob(run_data, output_dir, clients=None, is_standalone=True)
+
+        script_file = job.create_job(run_data)
+
+        self.assertTrue(script_file != None, "No report returned")
+        self.assertTrue(os.path.isfile(script_file), "Job script file wasn't created")
+
+        job.start_job(run_data)
+
+##        self.assertTrue(script_file != None, "No report returned")
 ##        self.assertTrue(isinstance(ret, list), "Report should be a list")
 ##        self.assertTrue(len(ret) > 0, "Report must have at least one element")
 ##
-##        output_dir = ret[0]["shared_folder"]
+##        output_dir = ret[0]['shared_folder']
 ##        print("OUTPUT DIR IS: " + output_dir + "\n")
 ##        self.assertTrue(os.path.exists(output_dir), "Shared directory " + output_dir + " does not exist.")
 #
-#        job_dir = os.path.join(output_dir, "job_temp", "output")
-#        report_dir = os.path.join(output_dir, "reports")
-#        comp_results_file = os.path.join(job_dir, "1.out")
-#        output_image = os.path.join(report_dir, "length_histogram_uniprot.png")
+#        job_dir = os.path.join(output_dir, 'job_temp', 'output')
+#        report_dir = os.path.join(output_dir, 'reports')
+#        comp_results_file = os.path.join(job_dir, '1.out')
+#        output_image = os.path.join(report_dir, 'length_histogram_uniprot.png')
 #        if not os.path.isfile(output_image):
-#            output_image = os.path.join(report_dir, "length_histogram.png")
+#            output_image = os.path.join(report_dir, 'length_histogram.png')
 #
 #        self.assertTrue(os.path.exists(job_dir), "Job output directory " + job_dir + " does not exist.")
 #        self.assertTrue(os.path.exists(report_dir), "Report output directory " + job_dir + " does not exist.")

@@ -64,7 +64,7 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
         ret = cls.wsClient.create_workspace({'workspace': cls.wsName})  # noqa
         cls.workspace_id = ret[0]
 
-        cls.tu = EfiTestUtils(cls, cls.workspace_id, cls.wsName, cls.dfu, cls.wsClient)
+        cls.tu = EfiTestUtils(cls, cls.workspace_id, cls.wsName, cls.dfu, cls.wsClient, cls.scratch)
 
     @classmethod
     def tearDownClass(cls):
@@ -90,23 +90,13 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
 #        self.run_gen_test("option_" + option, test_params, expected)
 #        return True
 
-    def get_output_dir(self, prefix):
-        dir_num = 0
-        output_dir = os.path.join(self.scratch, prefix + str(dir_num))
-        print(output_dir)
-        while os.path.exists(output_dir):
-            dir_num = dir_num + 1
-            output_dir = os.path.join(self.scratch, prefix + str(dir_num))
-        utils.mkdir_p(output_dir)
-        return output_dir
-
     def test_analysis(self):
         
         db_conf = '/apps/EFIShared/testing_db_conf.sh'
         efi_est_config = '/apps/EST/testing_env_conf.sh'
 
         data_transfer_zip_src = self.tu.get_test_data_file("data_transfer")
-        output_dir = self.get_output_dir('analysis_')
+        output_dir = EfiTestUtils.get_output_dir('analysis_', self.scratch)
         dt_zip_tmp = os.path.join(output_dir, 'dt.zip')
         shutil.copyfile(data_transfer_zip_src, dt_zip_tmp)
 
@@ -163,9 +153,9 @@ class kbase_efi_tools_moduleTest(unittest.TestCase):
                            ('family,ex_frag', True),
                            ('family,frag', False)
                            ])
-    def disabled_test_est_generate_family(self, name, exclude_fragments):
+    def test_est_generate_family(self, name, exclude_fragments):
 
-        output_dir = self.get_output_dir('generate_' + name + '_')
+        output_dir = EfiTestUtils.get_output_dir('generate_' + name + '_', self.scratch)
 
         option = 'family'
         test_opts = [exclude_fragments, option]

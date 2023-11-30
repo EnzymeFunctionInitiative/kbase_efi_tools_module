@@ -34,7 +34,7 @@ class EstGenerateJob:
         if self.is_debug:
             print(message)
 
-    def __init__(self, config, shared_folder, clients):
+    def __init__(self, config, shared_folder, clients, is_standalone = False):
 
         #TODO: make this a config variable
         est_home = '/apps/EST'
@@ -58,10 +58,12 @@ class EstGenerateJob:
         EfiUtils.mkdir_p(self.output_dir)
         self._log('Creating ' + self.output_dir)
 
+        self.is_standalone = is_standalone
         self.script_file = ''
         self.est_dir = est_home
-        self.wsclient = clients.Workspace
-        self.dfu = clients.DataFileUtil
+        if not self.is_standalone:
+            self.wsclient = clients.Workspace
+            self.dfu = clients.DataFileUtil
         #We need to keep track of the workspace objects use or create
         self.input_objects = []
         self.output_objects = []
@@ -262,6 +264,9 @@ class EstGenerateJob:
 
 
     def get_sequence_set_ref(self, kb_params):
+        if self.is_standalone:
+            return ""
+
         if "workspace_id" in kb_params:
             workspace_id = kb_params["workspace_id"]
         else:
@@ -325,9 +330,9 @@ class EstGenerateJob:
 
     #Use this function to save the output object to the KBase workspace
     def save_output(self, kb_params, dataset_vals):
-        #I am assuming kb_params contains the following fields:workspace, sequenceset_ref, output_name
-        #I am assuming dataset_vals contains the following fields:output_file, input_sequence_count, input_type, input_family_id, evalue_for_ssn_calculation, domain_option, exlude_fragments, database_version, uniref_version, ids_in_pfam_family, cluster_ids_in_uniref_family, total_sequences_in_dataset, total_edges, unique_sequences, convergence_ratio
-        
+        if self.is_standalone:
+            return None
+
         #First saving output file to KBase S3 using data file util
         handle_info = None
         if exists(dataset_vals["output_file"]):
