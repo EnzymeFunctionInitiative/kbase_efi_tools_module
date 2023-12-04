@@ -10,6 +10,8 @@
 
     mkdir /tmp/output
     docker run -it --mount type=bind,source=/tmp/output,target=/data/output <TAG_NAME> test /data/output
+    # Run from remote image; replace the tag with the appropriate version (e.g. the latest, look on https://hub.docker.com/repository/docker/nilsoberg/kbase-efi/general)
+    docker run -it --mount type=bind,source=/tmp/output,target=/data/output docker://nilsoberg/kbase-efi:standalone-0.5.1 test /data/output
 
 ## Run through Singularity
 
