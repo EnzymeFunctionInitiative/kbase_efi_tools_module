@@ -9,13 +9,14 @@ from ..utils.utils import EfiUtils
 
 class EfiTestUtils:
 
-    def __init__(self, cls, workspace_id, workspace_name, dfu, wsclient):
+    def __init__(self, cls, workspace_id, workspace_name, dfu, wsclient, scratch):
         self.cls = cls
         self.workspace_id = workspace_id
         self.workspace_name = workspace_name
         self.load_test_info(cls)
         self.dfu = dfu
         self.wsclient = wsclient
+        self.scratch = scratch
         cls.test_data_dir = self.get_data_dir_path()
 
     def load_test_info(self, cls):
@@ -105,7 +106,7 @@ class EfiTestUtils:
 
     def get_job_output_dir(self):
         # This is where the EST jobs put their output data
-        output_dir = self.cls.scratch + '/job'
+        output_dir = self.scratch + '/job'
         return output_dir
 
 
